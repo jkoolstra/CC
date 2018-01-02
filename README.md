@@ -1,2 +1,0 @@
-# CC
-Mini Pascal Compiler

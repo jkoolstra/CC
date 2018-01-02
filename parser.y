@@ -1,17 +1,20 @@
+
 %{
     #include <stdio.h>
     #include <stdlib.h>
+    #include "StringTable.h"
+    #include "AST.h"
+
     int yylex(void);
     int yyerror(char*);
-
     extern int lineno;
-%}
 
-%union {
-    float realVal;
-    int intVal;
-    int index;
-}
+    void cleanup(void);
+
+    StringTable strTab;
+
+    #define YYSTYPE ASTNode*
+%}
 
 %token TOK_INVALID
 %token TOK_NEWLINE
@@ -160,7 +163,7 @@ simple_factor :
     |
         TOK_ID '[' expression ']'
     |
-        TOK_NUM
+        TOK_NUM { $$ = yylval; }
     |
         '(' expression ')'
 ;
@@ -174,16 +177,22 @@ sign :
 int yyerror(char *errmsg) {
     fprintf(stderr, "PARSE ERROR (%d)\n", lineno);
     // Yes, a parse error is a successful (meaningful) result
+    cleanup();
     exit(EXIT_SUCCESS);
 }
 
 int main(void) {
     //yydebug = 1;
+    strTab = newStringTable(0);
     yyparse();
     printf("ACCEPTED\n");
+    cleanup();
     return 0;
 }
 
+void cleanup(void) {
+    freeStringTable(strTab);
+}
 
 
 
