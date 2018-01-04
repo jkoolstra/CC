@@ -62,7 +62,7 @@ end                 { return END; }
 {MULOP}             { return MULOP; }
 {INTEGER_NUMBER}    { return INUM; }
 {REAL_NUMBER}       { return RNUM; }
-{ID}                { unsigned index = appendToStringTable(&strTab, yytext); printf("[L] %s placed at: %d \n", yytext, index); yylval.strtabindex = index; return ID;  }
+{ID}                { yylval.strtabindex = appendToStringTable(&strTab, yytext); return ID;  }
 .                   { return *yytext; }
 
 %%

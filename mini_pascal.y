@@ -22,16 +22,18 @@
 
 %%  /****** grammar rules section ********/
 
-Program         : PROGRAM ID '(' Identifier_list ')' ';' 
-                  Declarations
-                  Subprogram_declarations
-                  Compound_statement
-                  '.' 
+Program         : PROGRAM 
+                    ID {insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_PROGRAM));}
+                    '(' Identifier_list ')' ';' 
+                    Declarations
+                    Subprogram_declarations
+                    Compound_statement
+                    '.' 
 
-Identifier_list : ID { insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_VARIABLE)); printSymbolStack(&stack) }
-                | Identifier_list ',' ID
+Identifier_list : ID {insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_VARIABLE));}
+                | Identifier_list ',' ID {insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_VARIABLE));}
 
-Declarations    : Declarations VAR Identifier_list ':' Type ';' { printf("Identifier found\n"); }
+Declarations    : Declarations VAR Identifier_list ':' Type ';'
                 | /* Empty */
 
 
@@ -44,11 +46,16 @@ Standard_type   : INTEGER
 Subprogram_declarations : Subprogram_declarations Subprogram_declaration ';'
                         | /* Empty */
 
-Subprogram_declaration  : Subprogram_head Declarations Compound_statement
+Subprogram_declaration  : Subprogram_head {indent(&stack);}
+                            Declarations 
+                            Compound_statement { outdent(&stack);}
 
-Subprogram_head : FUNCTION ID 
+Subprogram_head : FUNCTION 
+                    ID {insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_FUNCTION));}
                     Arguments ':' Standard_type ';'
-                | PROCEDURE ID Arguments ';'
+                | PROCEDURE 
+                    ID {insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_PROCEDURE));}
+                    Arguments ';'
 
 Arguments       : '(' Parameter_list ')'
                 | /* Empty */
@@ -72,7 +79,7 @@ Statement       : Variable ASSIGNOP Expression
                 | IF Expression THEN Statement ELSE Statement
                 | WHILE Expression DO Statement
 
-Variable        : ID
+Variable        : ID 
                 | ID '[' Expression_list ']'
 
 Procedure_statement : ID

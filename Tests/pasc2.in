@@ -1,6 +1,6 @@
 PROGRAM euclid (input, output);
 
-function gcd_iterative(u, v : integer) : ;
+function gcd_iterative(u, v : integer) : integer ;
 var t : integer;
 begin
   while v <> 0 do

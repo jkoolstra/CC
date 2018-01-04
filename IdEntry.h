@@ -6,6 +6,7 @@
 typedef enum type {
 	TYPE_PROGRAM,
 	TYPE_FUNCTION,
+	TYPE_PROCEDURE,
 	TYPE_VARIABLE
 } Type; 
 
