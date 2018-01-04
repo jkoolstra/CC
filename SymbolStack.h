@@ -5,8 +5,9 @@
 #ifndef SYMBOLSTACK_H
 #define SYMBOLSTACK_H
 
-#include "StringTable.h"
 #include "SymbolTable.h"
+#include "StringTable.h"
+#include "StringTable.h"
 
 #define MAX_INDENT 2 
 
@@ -19,7 +20,7 @@ typedef struct symbolStack {
 SymbolStack initSymbolStack(StringTable*);
 void freeSymbolStack(SymbolStack*);
 IdEntry *lookupSymbol(SymbolStack*, unsigned);
-void insertSymbol(SymbolStack*, unsigned, IdEntry*);
+void insertSymbol(SymbolStack*, unsigned, IdEntry);
 void indent(SymbolStack*);
 void outdent(SymbolStack*);
 void printSymbolStack(SymbolStack*);

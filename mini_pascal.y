@@ -8,7 +8,6 @@
 
     int yyerror(char *errmsg);
     SymbolStack stack;
-    IdEntry makeEntry(unsigned index, Type type);
 %}
 
 %union{
@@ -27,9 +26,9 @@ Program         : PROGRAM ID '(' Identifier_list ')' ';'
                   Declarations
                   Subprogram_declarations
                   Compound_statement
-                  '.'
+                  '.' 
 
-Identifier_list : ID
+Identifier_list : ID { insertSymbol(&stack ,yylval.strtabindex, makeIdEntry(yylval.strtabindex, TYPE_VARIABLE)); printSymbolStack(&stack) }
                 | Identifier_list ',' ID
 
 Declarations    : Declarations VAR Identifier_list ':' Type ';' { printf("Identifier found\n"); }
@@ -47,11 +46,7 @@ Subprogram_declarations : Subprogram_declarations Subprogram_declaration ';'
 
 Subprogram_declaration  : Subprogram_head Declarations Compound_statement
 
-Subprogram_head : FUNCTION ID { printf("[P] NEW FUNCTION : %d -> %s\n", yylval.strtabindex, retrieveFromStringTable(strTab, yylval.strtabindex)); 
-                                IdEntry entry = makeEntry(yylval.strtabindex, TYPE_FUNCTION);
-                                insertSymbol(&stack, yylval.strtabindex, &entry);
-                                printSymbolStack(&stack);
-                                }
+Subprogram_head : FUNCTION ID 
                     Arguments ':' Standard_type ';'
                 | PROCEDURE ID Arguments ';'
 
@@ -104,13 +99,6 @@ Factor          : ID
                 | ID '[' Simple_expression ']'
 
 %%
-
-IdEntry makeEntry(unsigned index, Type type){
-    IdEntry entry;
-    entry.strtabIndex = index;
-    entry.type = type;
-    return entry;
-}
 
 int yyerror(char *errmsg) {
     fprintf(stderr, "PARSE ERROR (%d)\n", lineno);

@@ -94,7 +94,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 14 "mini_pascal.y"
+#line 13 "mini_pascal.y"
 {
     unsigned strtabindex;
 }

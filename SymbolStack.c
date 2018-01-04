@@ -23,7 +23,7 @@ void freeSymbolStack(SymbolStack* stack){
 
 IdEntry *lookupSymbol(SymbolStack* stack, unsigned strtabIndex){
   for(int i = stack->curLvl; i >= 0; i--){
-    IdEntry *entry = lookupSymbol(&stack->tables[i], strtabIndex);
+    IdEntry *entry = lookupSymbolInTable(&stack->tables[i], strtabIndex);
     if(entry != NULL){
       return entry;
     }
@@ -31,14 +31,15 @@ IdEntry *lookupSymbol(SymbolStack* stack, unsigned strtabIndex){
   return NULL;
 }
 
-void insertSymbol(SymbolStack* stack, unsigned strtabIndex, IdEntry* entry){
+void insertSymbol(SymbolStack* stack, unsigned strtabIndex, IdEntry entry){
   //printf("INSERTING AT LAYER\n");
   insertSymbolInTable(&stack->tables[stack->curLvl], strtabIndex, entry);
 }
 
 void indent(SymbolStack* stack){
   stack->curLvl++;
-  stack->tables[stack->curLvl] = initSymbolTable(&stack->strTab);
+  StringTable *tab = stack->strTab;
+  stack->tables[stack->curLvl] = initSymbolTable(tab);
 }
 
 void outdent(SymbolStack* stack){
@@ -53,6 +54,6 @@ void printSymbolStack(SymbolStack* stack){
   if(stack->curLvl == 1){
     printSymbolTable(&stack->tables[1]);
   } else {
-    printf("\t NONE\nm");
+    printf("\t NONE\n");
   }
 }

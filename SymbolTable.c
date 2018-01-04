@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "StringTable.h"
 #include "SymbolTable.h"
 
 SymbolTable initSymbolTable(StringTable* strtab) {
@@ -44,7 +43,7 @@ static unsigned int hash(char *str) {
   return hash%TABSIZE;
 }
 
-static IdEntry *linearSearch(unsigned strtabIndex, bucket b) {
+static IdEntry linearSearch(unsigned strtabIndex, bucket b) {
   while (b != NULL) {
     if (strtabIndex == b->key) {
       return b->data;
@@ -55,12 +54,13 @@ static IdEntry *linearSearch(unsigned strtabIndex, bucket b) {
 }
 
 
-IdEntry *lookupSymbolInTable(SymbolTable* table, unsigned strtabIndex) {
+IdEntry lookupSymbolInTable(SymbolTable* table, unsigned strtabIndex) {
   char *str = retrieveFromStringTable(*table->stringTab, strtabIndex);
   return linearSearch(strtabIndex, table->hashtab[hash(str)]);
 }
 
-void insertSymbolInTable(SymbolTable* table, unsigned strtabIndex, IdEntry *entry) {
+void insertSymbolInTable(SymbolTable* table, unsigned strtabIndex, IdEntry entry) {
+  printEntry(entry);
   char *str = retrieveFromStringTable(*table->stringTab, strtabIndex);
   unsigned int h = hash(str);
   bucket nxt = table->hashtab[h];
@@ -68,35 +68,25 @@ void insertSymbolInTable(SymbolTable* table, unsigned strtabIndex, IdEntry *entr
   table->hashtab[h]->next = nxt;
   table->hashtab[h]->key = strtabIndex; 
   table->hashtab[h]->data = entry;
-  //printf("Inserted [%s] at hash index : %um", retrieveFromStringTable(*table->stringTab, strtabIndex));
+  printf("Inserted [%s] at hash index : %u", retrieveFromStringTable(*table->stringTab, strtabIndex), h);
 }
 
 void printSymbolTable(SymbolTable* table){
   unsigned int i;
   for (i=0; i < TABSIZE; i++) {
     bucket b = table->hashtab[i];
-    if(b != NULL)
+    if(1/*b != NULL*/)
       printf("\t [%d] | ", i);
     else {
       continue;
     }
     while (b != NULL) {
-      IdEntry *entry = b->data;
-      unsigned index = entry->strtabIndex;
-      Type type = entry->type;
-      printf("{ index : %u , type : ", index);
-      if(type == TYPE_PROGRAM){
-        printf("TYPE_PROGRAM");
-      } else if (type == TYPE_FUNCTION){
-        printf("TYPE_FUNCTION");
-      } else if (type == TYPE_IDENTIFIER){
-        printf("TYPE_IDENTIFIER");
-      } else {
-        printf("TYPE_UNKNOWN");
-      }
-      printf(" } | ");
+      printf("LOOPING");
+      IdEntry entry = b->data;
+      printEntry(entry);
       b = b->next;
     }
     printf("\n");
   }
 }
+
