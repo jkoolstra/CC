@@ -18,7 +18,7 @@ typedef enum valueType {
 typedef struct idEntry{
 	unsigned strtabIndex;
 	Type type;
-} *IdEntry;
+} IdEntry;
 
 IdEntry makeIdEntry(unsigned, Type);
 void printEntry(IdEntry entry);

@@ -43,7 +43,7 @@ static unsigned int hash(char *str) {
   return hash%TABSIZE;
 }
 
-static IdEntry linearSearch(unsigned strtabIndex, bucket b) {
+static IdEntry *linearSearch(unsigned strtabIndex, bucket b) {
   while (b != NULL) {
     if (strtabIndex == b->key) {
       return b->data;
@@ -54,36 +54,35 @@ static IdEntry linearSearch(unsigned strtabIndex, bucket b) {
 }
 
 
-IdEntry lookupSymbolInTable(SymbolTable* table, unsigned strtabIndex) {
+IdEntry *lookupSymbolInTable(SymbolTable* table, unsigned strtabIndex) {
   char *str = retrieveFromStringTable(*table->stringTab, strtabIndex);
   return linearSearch(strtabIndex, table->hashtab[hash(str)]);
 }
 
 void insertSymbolInTable(SymbolTable* table, unsigned strtabIndex, IdEntry entry) {
-  printEntry(entry);
   char *str = retrieveFromStringTable(*table->stringTab, strtabIndex);
   unsigned int h = hash(str);
   bucket nxt = table->hashtab[h];
   table->hashtab[h] = malloc(sizeof(struct bucket));
   table->hashtab[h]->next = nxt;
   table->hashtab[h]->key = strtabIndex; 
-  table->hashtab[h]->data = entry;
-  printf("Inserted [%s] at hash index : %u", retrieveFromStringTable(*table->stringTab, strtabIndex), h);
+  table->hashtab[h]->data = malloc(sizeof(IdEntry));
+  memcpy(table->hashtab[h]->data, &entry, sizeof(IdEntry));
+  //printf("Inserted [%s] at hash index : %u", retrieveFromStringTable(*table->stringTab, strtabIndex), h);
 }
 
 void printSymbolTable(SymbolTable* table){
   unsigned int i;
   for (i=0; i < TABSIZE; i++) {
     bucket b = table->hashtab[i];
-    if(1/*b != NULL*/)
+    if(b != NULL)
       printf("\t [%d] | ", i);
     else {
       continue;
     }
     while (b != NULL) {
-      printf("LOOPING");
-      IdEntry entry = b->data;
-      printEntry(entry);
+      IdEntry *entry = b->data;
+      printEntry(*entry);
       b = b->next;
     }
     printf("\n");

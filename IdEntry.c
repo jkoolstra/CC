@@ -8,20 +8,17 @@
 #include "IdEntry.h"
 
 IdEntry makeIdEntry(unsigned index, Type type){
-    IdEntry entry = NULL;
+    IdEntry entry;
 
-    entry->strtabIndex = index;
-    entry->type = type;
-
-    printEntry(entry);
+    entry.strtabIndex = index;
+    entry.type = type;
 
     return entry;
 }
 
 void printEntry(IdEntry entry){
-      printf("ENTRY: \n");
-      unsigned index = entry->strtabIndex;
-      Type type = entry->type;
+      unsigned index = entry.strtabIndex;
+      Type type = entry.type;
       printf("{ index : %u , type : ", index);
       if(type == TYPE_PROGRAM){
         printf("TYPE_PROGRAM");

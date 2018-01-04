@@ -12,7 +12,7 @@
 
 typedef struct bucket {
   unsigned key;   
-  IdEntry data;
+  IdEntry *data;
   struct bucket *next;
 } *bucket; 
 
@@ -23,7 +23,7 @@ typedef struct symbolTable {
 
 SymbolTable initSymbolTable(StringTable*);
 void freeSymbolTable(SymbolTable*);
-IdEntry lookupSymbolInTable(SymbolTable*, unsigned);
+IdEntry *lookupSymbolInTable(SymbolTable*, unsigned);
 void insertSymbolInTable(SymbolTable*, unsigned, IdEntry);
 void printSymbolTable(SymbolTable*);
 
