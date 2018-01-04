@@ -1,15 +1,13 @@
 
 %{
-    #define YYSTYPE ASTNode*
+    #define _PARSER_L
+    #include "parser.l.h"
+    #include "parser.y.h" // typedef YYSTYPE
+    #include "parser.tab.h" // YYSTYPE yylval
     #include <stdio.h>
     #include <string.h>
     #include "AST.h"
     #include "StringTable.h"
-    #include "parser.tab.h"
-
-    extern StringTable strTab;
-
-    int lineno = 1;
 %}
 
 %option nounput
@@ -58,15 +56,12 @@ begin       { return TOK_BEGIN; }
 end         { return TOK_END; }
 
 {ASSIGNOP}  {   SemanticValue sem;
-                ASTNodeValue value;
                 sem.op.assign = OP_SET_EQUAL;
-                value.token = TOK_ASSIGNOP;
-                yylval = buildASTNode(TOKEN_NODE, value, sem, 2, NULL, NULL);
+                yylval = buildASTNode(TOKEN_NODE, token(TOK_ASSIGNOP), sem, 2, NULL, NULL);
                 return TOK_ASSIGNOP;
             }
 
 {RELOP} {   SemanticValue sem;
-            ASTNodeValue value;
             if (strlen(yytext) == 1) {
                 switch (yytext[0]) {
                     case '<': sem.op.rel = OP_LE; break;
@@ -84,57 +79,47 @@ end         { return TOK_END; }
                         break;
                 }
             }
-            value.token = TOK_RELOP;
-            yylval = buildASTNode(TOKEN_NODE, value, sem, 2, NULL, NULL);
+            yylval = buildASTNode(TOKEN_NODE, token(TOK_RELOP), sem, 2, NULL, NULL);
             return TOK_RELOP;
         }
 
 {ADDOP}     {   SemanticValue sem;
-                ASTNodeValue value;
                 switch (yytext[0]) {
                     case '+': sem.op.add = OP_PLUS; break;
                     case '-': sem.op.add = OP_MIN; break;
                 }
-                value.token = TOK_ADDOP;
-                yylval = buildASTNode(TOKEN_NODE, value, sem, NUM_OF_CHILDREN_UNKNOWN);
+                yylval = buildASTNode(TOKEN_NODE, token(TOK_ADDOP), sem,
+                  NUM_OF_CHILDREN_UNKNOWN);
                 return TOK_ADDOP;
             }
 
 {MULOP} {   SemanticValue sem;
-            ASTNodeValue value;
             switch (yytext[0]) {
                 case '*': sem.op.mul = OP_MUL; break;
                 case '/': sem.op.mul = OP_DIV; break;
                 case 'd': sem.op.mul = OP_DIV_INT; break;
                 case 'm': sem.op.mul = OP_MOD; break;
             }
-            value.token = TOK_MULOP;
-            yylval = buildASTNode(TOKEN_NODE, value, sem, 2, NULL, NULL);
+            yylval = buildASTNode(TOKEN_NODE, token(TOK_MULOP), sem, 2, NULL, NULL);
             return TOK_MULOP;
         }
 
 
 {INTEGER_NUMBER}    {   SemanticValue sem;
-                        ASTNodeValue value;
                         sem.intVal = atoi(yytext);
-                        value.token = TOK_NUM;
-                        yylval = buildASTNode(TOKEN_NODE, value, sem, 0);
+                        yylval = buildASTNode(TOKEN_NODE, token(TOK_NUM), sem, 0);
                         return TOK_NUM;
                     }
 
 {REAL_NUMBER}   {   SemanticValue sem;
-                    ASTNodeValue value;
                     sscanf(yytext, "%f", &sem.realVal);
-                    value.token = TOK_NUM;
-                    yylval = buildASTNode(TOKEN_NODE, value, sem, 0);
+                    yylval = buildASTNode(TOKEN_NODE, token(TOK_NUM), sem, 0);
                     return TOK_NUM;
                 }
 
 {ID}        {   SemanticValue sem;
-                ASTNodeValue value;
-                sem.strTabIndex = appendToStringTable(strTab, yytext);
-                value.token = TOK_ID;
-                yylval = buildASTNode(TOKEN_NODE, value, sem, 0);
+                sem.strTabIndex = appendToStringTable(&strTab, yytext);
+                yylval = buildASTNode(TOKEN_NODE, token(TOK_ID), sem, 0);
                 return TOK_ID;
             }
 

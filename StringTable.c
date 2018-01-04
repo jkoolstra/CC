@@ -23,24 +23,44 @@ void freeStringTable(StringTable tab) {
     free(tab.tab);
 }
 
-int appendToStringTable(StringTable tab, char *str) {
-    int insertPos = tab.size;
-    int strLen = strlen(str);
-    if (tab.bufSize < tab.size + strLen + 1) {
-        tab.bufSize = strLen + 1 + tab.bufSize *
-          STRING_TAB_BUF_RESIZE_FACTOR;
-        tab.tab = safeRealloc(tab.tab, tab.bufSize * sizeof(char));
+int appendToStringTable(StringTable *tab, char *str) {
+    int index, strLen = strlen(str);
+    if ((index = lookupStringTable(*tab, str)) < tab->size) {
+        return index;
     }
-    strcpy(tab.tab + insertPos, str);
-    tab.size += strLen + 1;
-    return insertPos;
+    if (tab->bufSize < tab->size + strLen + 1) {
+        tab->bufSize = strLen + 1 + tab->bufSize *
+          STRING_TAB_BUF_RESIZE_FACTOR;
+        tab->tab = safeRealloc(tab->tab, tab->bufSize * sizeof(char));
+    }
+    strcpy(tab->tab + tab->size, str);
+    tab->size += strLen + 1;
+    return index;
+}
+
+int lookupStringTable(StringTable tab, char *str) {
+    int index = 0;
+    while (index < tab.size) {
+        if (strcmp(tab.tab + index, str) == 0) {
+            break;
+        }
+        index += strlen(tab.tab + index) + 1;
+    }
+    return index;
 }
 
 char* retrieveFromStringTable(StringTable tab, int index) {
     return tab.tab + index;
 }
 
-
+void printStringTable(StringTable tab) {
+    int index = 0;
+    printf("STRING TABLE;\n");
+    while (index < tab.size) {
+        printf("%s\n", tab.tab + index);
+        index += strlen(tab.tab + index) + 1;
+    }
+}
 
 
 

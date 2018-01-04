@@ -1,6 +1,7 @@
 
 
-parser : parser.tab.c lex.yy.c AST.c AST.h StringTable.c StringTable.h common.c common.h
+parser : parser.tab.c lex.yy.c parser.y.h parser.l.h \
+AST.c AST.h StringTable.c StringTable.h common.c common.h
 	gcc -g -Wall AST.c StringTable.c common.c parser.tab.c lex.yy.c -o parser -lfl
 
 parser.tab.c : parser.y

@@ -14,6 +14,8 @@ typedef struct StringTable {
 
 StringTable newStringTable(int);
 void freeStringTable(StringTable);
-int appendToStringTable(StringTable, char*);
+int appendToStringTable(StringTable*, char*);
+int lookupStringTable(StringTable, char*);
 char* retrieveFromStringTable(StringTable, int);
+void printStringTable(StringTable);
 #endif // #ifndef _STRING_TABLE_H
