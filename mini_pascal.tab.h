@@ -59,9 +59,9 @@
      RELOP = 275,
      ADDOP = 276,
      MULOP = 277,
-     ID = 278,
-     INUM = 279,
-     RNUM = 280
+     INUM = 278,
+     RNUM = 279,
+     ID = 280
    };
 #endif
 /* Tokens.  */
@@ -85,21 +85,22 @@
 #define RELOP 275
 #define ADDOP 276
 #define MULOP 277
-#define ID 278
-#define INUM 279
-#define RNUM 280
+#define INUM 278
+#define RNUM 279
+#define ID 280
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 13 "mini_pascal.y"
+#line 19 "mini_pascal.y"
 {
-    unsigned strtabindex;
+    StrtabIndexList indexList;
+    Type type;
 }
 /* Line 1529 of yacc.c.  */
-#line 103 "mini_pascal.tab.h"
+#line 104 "mini_pascal.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

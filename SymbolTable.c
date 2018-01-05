@@ -59,13 +59,13 @@ IdEntry *lookupSymbolInTable(SymbolTable* table, unsigned strtabIndex) {
   return linearSearch(strtabIndex, table->hashtab[hash(str)]);
 }
 
-void insertSymbolInTable(SymbolTable* table, unsigned strtabIndex, IdEntry entry) {
-  char *str = retrieveFromStringTable(*table->stringTab, strtabIndex);
+void insertSymbolInTable(SymbolTable* table, IdEntry entry) {
+  char *str = retrieveFromStringTable(*table->stringTab, entry.strtabIndex);
   unsigned int h = hash(str);
   bucket nxt = table->hashtab[h];
   table->hashtab[h] = malloc(sizeof(struct bucket));
   table->hashtab[h]->next = nxt;
-  table->hashtab[h]->key = strtabIndex; 
+  table->hashtab[h]->key = entry.strtabIndex; 
   table->hashtab[h]->data = malloc(sizeof(IdEntry));
   memcpy(table->hashtab[h]->data, &entry, sizeof(IdEntry));
   //printf("Inserted [%s] at hash index : %u", retrieveFromStringTable(*table->stringTab, strtabIndex), h);
@@ -82,7 +82,7 @@ void printSymbolTable(SymbolTable* table){
     }
     while (b != NULL) {
       IdEntry *entry = b->data;
-      printEntry(*entry);
+      printEntry(*entry, *table->stringTab);
       b = b->next;
     }
     printf("\n");

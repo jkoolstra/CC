@@ -20,7 +20,7 @@ typedef struct symbolStack {
 SymbolStack initSymbolStack(StringTable*);
 void freeSymbolStack(SymbolStack*);
 IdEntry *lookupSymbol(SymbolStack*, unsigned);
-void insertSymbol(SymbolStack*, unsigned, IdEntry);
+void insertSymbol(SymbolStack*, IdEntry);
 void indent(SymbolStack*);
 void outdent(SymbolStack*);
 void printSymbolStack(SymbolStack*);

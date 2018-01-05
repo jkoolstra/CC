@@ -5,9 +5,12 @@
     #include <stdio.h>
     #include <string.h>
     #include "StringTable.h"
+    #include "IdEntry.h"
+    #include "common.h"
 
 int lineno = 1;
 StringTable strTab;
+void makeIdentifier();
 
 %}
 
@@ -62,13 +65,18 @@ end                 { return END; }
 {MULOP}             { return MULOP; }
 {INTEGER_NUMBER}    { return INUM; }
 {REAL_NUMBER}       { return RNUM; }
-{ID}                { yylval.strtabindex = appendToStringTable(&strTab, yytext); return ID;  }
+{ID}                { makeIdentifier(); return ID;  }
 .                   { return *yytext; }
 
 %%
 
+void makeIdentifier(){
+    unsigned index = appendToStringTable(&strTab, yytext);
 
-
+    yylval.indexList.indices = safeMalloc(sizeof(unsigned));
+    yylval.indexList.indices[0] = index;
+    yylval.indexList.numberOfIndices = 1;
+}
 
 
 

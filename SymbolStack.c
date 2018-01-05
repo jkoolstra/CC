@@ -31,9 +31,9 @@ IdEntry *lookupSymbol(SymbolStack* stack, unsigned strtabIndex){
   return NULL;
 }
 
-void insertSymbol(SymbolStack* stack, unsigned strtabIndex, IdEntry entry){
+void insertSymbol(SymbolStack* stack, IdEntry entry){
   //printf("INSERTING AT LAYER\n");
-  insertSymbolInTable(&stack->tables[stack->curLvl], strtabIndex, entry);
+  insertSymbolInTable(&stack->tables[stack->curLvl], entry);
 }
 
 void indent(SymbolStack* stack){

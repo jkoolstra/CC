@@ -13,5 +13,5 @@ end;
 end;
 BEGIN
   readln(a, b);
-  writeln(gcd_iterative(a,b))å
+  writeln(gcd_iterative(a,b))
 END.
