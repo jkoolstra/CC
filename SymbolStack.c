@@ -37,12 +37,14 @@ void insertSymbol(SymbolStack* stack, IdEntry entry){
 }
 
 void indent(SymbolStack* stack){
+  printf("INDENTING\n");
   stack->curLvl++;
   StringTable *tab = stack->strTab;
   stack->tables[stack->curLvl] = initSymbolTable(tab);
 }
 
 void outdent(SymbolStack* stack){
+  printf("OUTDENTING\n");
   freeSymbolTable(&stack->tables[stack->curLvl]);
   stack->curLvl--;
 }

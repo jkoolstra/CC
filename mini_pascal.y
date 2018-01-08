@@ -10,7 +10,16 @@
 
     int yyerror(char *errmsg);
     StrtabIndexList combineIdentifiers(StrtabIndexList, StrtabIndexList);
-    void declareIdentifiers(StrtabIndexList, Type, IdType);
+    ParameterList createParameterList(StrtabIndexList list, Type t);
+    ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo);
+
+    void declareFunctionLocally(StrtabIndexList, Type type);
+    void declareParametersLocally(ParameterList);
+
+    void declareVariable(StrtabIndexList indentifiers, Type type);
+    void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList parameters);
+    void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters);
+    //void declareIdentifiers(StrtabIndexList, Type, IdType);
     Type makeEmptyType();
 
     SymbolStack stack;
@@ -18,6 +27,7 @@
 
 %union{
     StrtabIndexList indexList;
+    ParameterList parameterList;
     Type type;
 }
 
@@ -25,7 +35,8 @@
 %token VAR ARRAY OF ARRSEP INTEGER REAL
 %token ASSIGNOP RELOP ADDOP MULOP INUM RNUM ID
 
-%type <indexList> Identifier_list
+%type <indexList> Identifier_list 
+%type <parameterList> Parameter_list Arguments
 %type <type> Standard_type Type
 
 %type <indexList> ID
@@ -41,40 +52,76 @@ Program : PROGRAM
             Declarations
             Subprogram_declarations
             Compound_statement
-            '.' { printf("DECLARING PROGRAM\n"); declareIdentifiers($2, makeEmptyType(), TYPE_PROGRAM); }
+            '.' { 
+                    //declareIdentifiers($2, makeEmptyType(), TYPE_PROGRAM); 
+                }
 
 Identifier_list : ID { $$ = $1; }
-                | Identifier_list ',' ID { $$ = combineIdentifiers($1, $3);}
+                | Identifier_list ',' ID    {     
+                                                $$ = combineIdentifiers($1, $3);
+                                            }
 
-Declarations    : Declarations VAR Identifier_list ':' Type ';' { declareIdentifiers($3, $5, TYPE_VARIABLE); }
+Declarations    : Declarations VAR Identifier_list ':' Type ';' { 
+                                                                    declareVariable($3, $5); 
+                                                                }
                 | /* Empty */
 
 
-Type            : Standard_type { $$ = $1;  $$.valueType.base = TYPE_SINGLE; }
-                | ARRAY '[' INUM '.''.' INUM ']' OF Standard_type { $$ = $9; $$.valueType.base = TYPE_ARRAY;  }
+Type            : Standard_type { 
+                                    $$ = $1;  
+                                    $$.base = TYPE_SINGLE; 
+                                }
+                | ARRAY '[' INUM '.''.' INUM ']' OF Standard_type   { 
+                                                                        $$ = $9; 
+                                                                        $$.base = TYPE_ARRAY;  
+                                                                    }
 
-Standard_type   : INTEGER { $$.valueType.secondary = TYPE_INTEGER ; }
-                | REAL { $$.valueType.secondary = TYPE_REAL ; }
+Standard_type   : INTEGER   { 
+                                $$.secondary = TYPE_INTEGER ; 
+                            }
+                | REAL      { 
+                                $$.secondary = TYPE_REAL ; 
+                            }
 
 Subprogram_declarations : Subprogram_declarations Subprogram_declaration ';'
                         | /* Empty */
 
-Subprogram_declaration  : Subprogram_head {indent(&stack);}
-                            Declarations 
-                            Compound_statement { outdent(&stack);}
+Subprogram_declaration  : Subprogram_head   
+                            Declarations
+                            Compound_statement  { 
+                                                    outdent(&stack);
+                                                }
 
 Subprogram_head : FUNCTION 
                     ID 
-                    Arguments ':' Standard_type ';' { $5.valueType.base = TYPE_SINGLE; declareIdentifiers($2, $5, TYPE_FUNCTION);}
+                    Arguments ':' Standard_type ';'     { 
+                                                            declareFunction($2, $5, $3);
+                                                            indent(&stack);
+                                                            declareFunctionLocally($2, $5);
+                                                            declareParametersLocally($3);
+                                                        }
                 | PROCEDURE 
                     ID 
-                    Arguments ';' { declareIdentifiers($2, makeEmptyType(), TYPE_PROCEDURE);}
+                    Arguments ';'   { 
+                                        declareProcedure($2, $3);
+                                        indent(&stack);
+                                        declareParametersLocally($3);
+                                    }
 
-Arguments       : '(' Parameter_list ')' 
+Arguments       : '(' Parameter_list ')'    {
+                                                $$ = $2;
+                                            }
                 | /* Empty */
 
-Parameter_list  : Identifier_list ':' Type { declareIdentifiers($1, $3, TYPE_PARAMETER); }
-                | Parameter_list ';' Identifier_list ':' Type { declareIdentifiers($3, $5, TYPE_PARAMETER); }
+Parameter_list  : Identifier_list ':' Type  {   
+                                                $$ = createParameterList($1, $3);
+                                                //declareParameters($1, $3); 
+                                            }
+                | Parameter_list ';' Identifier_list ':' Type   { 
+                                                                    ParameterList secondList = createParameterList($3, $5);
+                                                                    $$ = combineParameterLists($1, secondList);
+                                                                    //declareParameters($3, $5); 
+                                                                }
 
 Compound_statement  : BEG
                       Optional_statements
@@ -120,24 +167,105 @@ Factor          : ID
 
 %%
 
-void declareIdentifiers(StrtabIndexList indentifiers, Type type, IdType idType){
+void declareVariable(StrtabIndexList indentifiers, Type type){
+    for(int i = indentifiers.numberOfIndices-1 ; i >= 0 ; i--){
+        VariableData *data = safeMalloc(sizeof(VariableData *));
+        data->type = type;
+
+        IdEntry newEntry = makeIdEntry(indentifiers.indices[i]);
+        newEntry.data = data;
+        newEntry.idType = TYPE_VARIABLE;
+        insertSymbol(&stack, newEntry);
+    }
+    //printSymbolStack(&stack);
+}
+
+void declareParametersLocally(ParameterList list){
+    for(int i = 0 ; i < list.numberOfParameters ; i++){
+        VariableData data;
+        data.type = list.parameters[i].type; 
+
+        IdEntry newEntry = makeIdEntry(list.parameters[i].strtabIndex);
+        newEntry.data = &data;
+        newEntry.idType = TYPE_VARIABLE;
+        insertSymbol(&stack, newEntry);
+    }
+    printSymbolStack(&stack);
+}
+
+void declareFunctionLocally(StrtabIndexList indentifiers, Type type){
+    VariableData data;
+    data.type = type; 
+        
+    IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
+    newEntry.data = &data;
+    newEntry.idType = TYPE_VARIABLE;
+    insertSymbol(&stack, newEntry);
+
+    printSymbolStack(&stack);
+}
+
+void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList parameters){
+    //printf("Declaring function");
+    FunctionData *data = safeMalloc(sizeof(FunctionData *));
+    data->returnType = type;
+    data->parameters = &parameters;
+
+    IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
+    newEntry.data = data;
+    newEntry.idType = TYPE_FUNCTION;
+    insertSymbol(&stack, newEntry);
+    //printSymbolStack(&stack);
+}
+
+void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
+    FunctionData *data = safeMalloc(sizeof(ProcedureData *));
+    data->parameters = &parameters;
+
+    IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
+    newEntry.data = data;
+    newEntry.idType = TYPE_FUNCTION;
+    insertSymbol(&stack, newEntry);
+    //printSymbolStack(&stack);
+}
+
+/*void declareIdentifiers(StrtabIndexList indentifiers, Type type, IdType idType){
     for(int i = indentifiers.numberOfIndices-1 ; i >= 0 ; i--){
         IdEntry newEntry = makeIdEntry(indentifiers.indices[i]);
         newEntry.type = type;
         newEntry.type.idType = idType;
         insertSymbol(&stack, newEntry);
     }
+}*/
+
+ParameterList createParameterList(StrtabIndexList list, Type t){
+    ParameterList newList; // = safeMalloc(sizeof(ParameterList));
+    newList.numberOfParameters = 1;
+    newList.parameters = safeMalloc(list.numberOfIndices * sizeof(ParameterData));
+
+    for(int i =0 ; i < list.numberOfIndices; i++){
+        ParameterData data; // = safeMalloc(sizeof(ParameterData));
+        data.strtabIndex = list.indices[i];
+        data.type = t;
+
+        newList.parameters[i] = data;
+    }
+    return newList;
 }
 
-Type makeEmptyType(){
-    Type t;
-    t.idType = NO_ID_TYPE;
-    ValueType vt;
-    vt.base = NO_BASE_TYPE;
-    vt.secondary = NO_SECONDARY_TYPE;
-    t.valueType = vt;
-
-    return t;
+ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo){
+    ParameterList newList;
+    newList.numberOfParameters = listOne.numberOfParameters + listTwo.numberOfParameters;
+    newList.parameters = safeMalloc(newList.numberOfParameters * sizeof(ParameterData));
+    int i;
+    int j;
+    for(i =0 ; i < listOne.numberOfParameters; i++){
+        newList.parameters[i] = listOne.parameters[i];
+    }
+    for(j =0 ; j < listTwo.numberOfParameters; j++){
+        newList.parameters[j+i] = listTwo.parameters[j];
+    }
+    return newList;
 }
 
 StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList listTwo){
