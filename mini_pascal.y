@@ -63,9 +63,7 @@ Program : PROGRAM
             Declarations
             Subprogram_declarations
             Compound_statement
-            '.' {
-                    //declareIdentifiers($2, makeEmptyType(), TYPE_PROGRAM);
-                }
+            '.'	
 
 Identifier_list : ID { $$ = $1; }
                 | Identifier_list ',' ID    {
@@ -105,13 +103,13 @@ Subprogram_head : FUNCTION
                     ID
                     Arguments ':' Standard_type ';'     {
                                                             declareFunction($2, $5, $3);
-															printSymbolStack(&stack);
+															//printSymbolStack(&stack);
                                                             indent(&stack);
-															printSymbolStack(&stack);
+															//printSymbolStack(&stack);
                                                             declareFunctionLocallyAsVariable($2, $5);
-															printSymbolStack(&stack);
+															//printSymbolStack(&stack);
                                                             declareParametersLocallyAsVariables($3);
-															printSymbolStack(&stack);
+															//printSymbolStack(&stack);
                                                         }
                 | PROCEDURE
                     ID
@@ -132,20 +130,11 @@ Arguments       : '(' Parameter_list ')'    {
                                             }
 
 Parameter_list  : Identifier_list ':' Type  {
-												printf("Single\n");
                                                 $$ = createParameterList($1, $3);
-												printf("%d \n",$$.numberOfParameters);
-												for(int i = 0; i < $$.numberOfParameters; i++){
-													printf("[%d] %s: \n", i, retrieveFromStringTable(*(stack.strTab), $$.parameters[i]->strtabIndex));
-												}
                                             }
                 | Parameter_list ';' Identifier_list ':' Type   {
-                                                                    appendParameterLists(&$1, $3, $5);
-																	$$ = $1;
-																	printf("%d \n",$$.numberOfParameters);
-																	for(int i = 0; i < $$.numberOfParameters; i++){
-																		printf("[%d] %s: \n", i, retrieveFromStringTable(*(stack.strTab), $$.parameters[i]->strtabIndex));
-																	}
+																	ParameterList l = createParameterList($3, $5);
+																	$$ = combineParameterLists($1, l);
 																}
 
 Compound_statement  : BEG
@@ -203,8 +192,8 @@ Expression_list : Expression						{
 														$$ = createTypeList($1);
 													}
                 | Expression_list ',' Expression	{
-														appendToTypeLists(&$1, $3);
-														$$ = $1;
+														TypeList l = createTypeList($3);
+														$$ = combineTypeLists($1, l);
 													}
 
 Expression      : Simple_expression                           {
@@ -237,7 +226,6 @@ Term            : Factor                        {
 Factor          : ID                            {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
                                                     checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
-                                                    checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = *data->type;
@@ -299,7 +287,7 @@ void checkAssignment(Type t1, Type t2){
 	2. Are the given parameters of the right type
 */
 void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
-	printSymbolStack(&stack);
+	//printSymbolStack(&stack);
 	IdEntry *entry = lookupSymbol(&stack, id);
 	ParameterList params;
 	if(entry->idType != type)
@@ -310,7 +298,6 @@ void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 	else
 		params = *((ProcedureData *)entry->data)->parameters;
 
-	printf("expected %d parameters but got %d instead\n", params.numberOfParameters, list.numberOfTypes);
 	if(params.numberOfParameters != list.numberOfTypes){
 		char *err;
 		asprintf(&err, "expected %d parameters but got %d instead", params.numberOfParameters, list.numberOfTypes);
@@ -366,9 +353,9 @@ Type checkTypes(Type t1, Type t2, enum yytokentype token){
     }
     case I_MULOP : {
       if(t1.base == TYPE_REAL || t2.base == TYPE_REAL){
-        char *err;
-        asprintf(&err, "integer operation on real");
-        errorMessage(err);
+        char *war;
+        asprintf(&war, "integer operation on real");
+        warningMessage(war);
       }
       return makeType(TYPE_INTEGER, TYPE_SCALAR);
     }
@@ -390,6 +377,7 @@ Type checkTypes(Type t1, Type t2, enum yytokentype token){
   }
 }
 
+// This method checks if the identifier is of the correct type, REAL OR INTEGER
 void checkIdentifierSecondaryType(unsigned index, SecondaryType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   VariableData *data = (VariableData *)entry->data;
@@ -400,6 +388,7 @@ void checkIdentifierSecondaryType(unsigned index, SecondaryType t){
   }
 }
 
+// This method checks if the identifier is of the correct type, SCALAR OR ARRAY
 void checkIdentifierIdType(unsigned index, IdType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   if(entry->idType != t){
@@ -412,18 +401,18 @@ void checkIdentifierIdType(unsigned index, IdType t){
   }
 }
 
+
+// This method checks if the identifier is already declared
 void checkIfIdentifierIsDeclared(unsigned index){
     IdEntry *entry = lookupSymbol(&stack, index);
     if(entry == NULL){
-        //printSymbolStack(&stack);
         char *err;
         asprintf(&err, "variable %s is not yet declared", retrieveFromStringTable(*(stack.strTab), index));
         errorMessage(err);
     }
 }
 
-// ---------- DECLARING -------
-
+// This method inserts a new entry in the symbol table, and reports if this is not possible
 void insert(IdEntry entry){
     if(!insertSymbol(&stack, entry)){
         char *err;
@@ -432,8 +421,9 @@ void insert(IdEntry entry){
     }
 }
 
+// ---------- DECLARING -------
+
 void declareVariable(StrtabIndexList indentifiers, Type type){
-    //printf("declareVariable\n");
     for(int i = indentifiers.numberOfIndices-1 ; i >= 0 ; i--){
         VariableData *data = safeMalloc(sizeof(VariableData *));
 
@@ -454,24 +444,14 @@ void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList para
 	data.returnType = safeMalloc(sizeof(Type));
 	memcpy(data.returnType, &type, sizeof(Type));
 
-
 	data.parameters = safeMalloc(sizeof(ParameterList));
 	memcpy(data.parameters, &parameters, sizeof(ParameterList));
-	printf("%d \n",parameters.numberOfParameters);
-	for(int i = 0; i < parameters.numberOfParameters; i++){
-		printf("[%d] %s: \n", i, retrieveFromStringTable(*(stack.strTab), parameters.parameters[i]->strtabIndex));
-	}
 
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = safeMalloc(sizeof(FunctionData));
 	memcpy(newEntry.data, &data, sizeof(FunctionData));
     newEntry.idType = TYPE_FUNCTION;
 
-	printf("base: %s -> secondary : %s \n", baseTypeString(((FunctionData *)newEntry.data)->returnType->base), secondaryTypeString(((FunctionData *)newEntry.data)->returnType->secondary));
-	for(int i = 0; i < ((FunctionData *)newEntry.data)->parameters->numberOfParameters; i++){
-		printf("[%d] %s: \n", i, retrieveFromStringTable(*(stack.strTab), ((FunctionData *)newEntry.data)->parameters->parameters[i]->strtabIndex));
-	}
-	printEntry(newEntry, *stack.strTab);
     insert(newEntry);
 }
 
@@ -486,39 +466,26 @@ void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
 }
 
 void declareParametersLocallyAsVariables(ParameterList list){
-    //printf("declareParametersLocallyAsVariables : %d\n", list.numberOfParameters);
     for(int i = 0 ; i < list.numberOfParameters ; i++){
-		//printf("base: %s -> secondary : %s \n", baseTypeString(list.parameters[i].type.base), secondaryTypeString(list.parameters[i].type.secondary));
         VariableData *data = safeMalloc(sizeof(VariableData *));
 
-		data->type = list.parameters[i]->type;/*safeMalloc(sizeof(Type));
-		memcpy(data->type, &list.parameters[i]->type, sizeof(Type));*/
+		data->type = list.parameters[i]->type;
 
         IdEntry newEntry = makeIdEntry(list.parameters[i]->strtabIndex);
         newEntry.data = data;
         newEntry.idType = TYPE_VARIABLE;
-		//printEntry(newEntry, *stack.strTab);
         insert(newEntry);
     }
-	//printSymbolStack(&stack);
-	//printSymbolStack(&stack);
 }
 
 void declareFunctionLocallyAsVariable(StrtabIndexList indentifiers, Type type){
-	//printSymbolStack(&stack);
     VariableData *data = safeMalloc(sizeof(VariableData *));
-	//printf("base: %s -> secondary : %s \n", baseTypeString(type.base), secondaryTypeString(type.secondary));
 	data->type = safeMalloc(sizeof(Type));
 	memcpy(data->type, &type, sizeof(Type));
-	//printf("base: %s -> secondary : %s \n", baseTypeString(data->type.base), secondaryTypeString(data->type.secondary));
-
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
     newEntry.idType = TYPE_VARIABLE;
-	//printEntry(newEntry, *stack.strTab);
     insert(newEntry);
-	//printSymbolStack(&stack);
-    //printSymbolStack(&stack);
 }
 
 // ------------- ERRORS & WARNINGS -----------------------
@@ -545,9 +512,8 @@ int main(int argc, char **argv) {
     strTab = newStringTable(0);
     stack = initSymbolStack(&strTab);
     yyparse();
-    printf("ACCEPTED\n");
-    //printStringTable(strTab);
-    //printSymbolStack(&stack);
+    printf("\x1B[32m" "ACCEPTED\n" "\x1B[0m");
+    freeSymbolStack(&stack);
     freeStringTable(strTab);
     return 0;
 }

@@ -119,12 +119,22 @@ TypeList createTypeList(Type t){
 }
 
 // OPERATIONS
-void appendParameterLists(ParameterList* list, StrtabIndexList indices, Type t){
-	printf("> %d \n",list->numberOfParameters);
-	for(int i = 0; i < list->numberOfParameters; i++){
-		printf("[%d] %d: \n", i, list->parameters[i]->strtabIndex);
-	}
+ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo){
+     ParameterList newList;
+     newList.numberOfParameters = listOne.numberOfParameters + listTwo.numberOfParameters;
+     newList.parameters = safeMalloc(newList.numberOfParameters * sizeof(ParameterData));
+     int i;
+     int j;
+     for(i =0 ; i < listOne.numberOfParameters; i++){
+         newList.parameters[i] = listOne.parameters[i];
+     }
+     for(j =0 ; j < listTwo.numberOfParameters; j++){
+         newList.parameters[j+i] = listTwo.parameters[j];
+     }
+     return newList;
+ }
 
+void appendParameterLists(ParameterList* list, StrtabIndexList indices, Type t){
 	int oldLength = list->numberOfParameters;
 	list->numberOfParameters = list->numberOfParameters + indices.numberOfIndices;
     safeRealloc(list->parameters, list->numberOfParameters * sizeof(ParameterData *));
@@ -141,10 +151,6 @@ void appendParameterLists(ParameterList* list, StrtabIndexList indices, Type t){
 		memcpy(list->parameters[i], &data, sizeof(ParameterData));
 		j++;
     }
-	printf("-- %d \n",list->numberOfParameters);
-	for(int i = 0; i < list->numberOfParameters; i++){
-		printf("[%d] %d: \n", i, list->parameters[i]->strtabIndex);
-	}
 }
 
 StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList listTwo){
@@ -161,6 +167,21 @@ StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList list
     }
     return newList;
 }
+
+TypeList combineTypeLists(TypeList listOne, TypeList listTwo){
+     TypeList newList;
+     newList.numberOfTypes = listOne.numberOfTypes + listTwo.numberOfTypes;
+     newList.types = safeMalloc(newList.numberOfTypes * sizeof(ParameterData));
+     int i;
+     int j;
+     for(i =0 ; i < listOne.numberOfTypes; i++){
+         newList.types[i] = listOne.types[i];
+     }
+     for(j =0 ; j < listTwo.numberOfTypes; j++){
+         newList.types[j+i] = listTwo.types[j];
+     }
+     return newList;
+ }
 
 void appendToTypeLists(TypeList* list, Type t){
     list->numberOfTypes = list->numberOfTypes + 1;

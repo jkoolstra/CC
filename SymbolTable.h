@@ -11,10 +11,10 @@
 #define TABSIZE 97   /* choose a small prime */
 
 typedef struct bucket {
-  unsigned key;   
+  unsigned key;
   IdEntry *data;
   struct bucket *next;
-} *bucket; 
+} *bucket;
 
 typedef struct symbolTable {
 	StringTable *stringTab;

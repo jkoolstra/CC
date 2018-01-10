@@ -82,7 +82,9 @@ TypeList createTypeList(Type t);
 
 //OPERATIONS
 StrtabIndexList combineIdentifiers(StrtabIndexList, StrtabIndexList);
+ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo);
 void appendParameterLists(ParameterList*, StrtabIndexList, Type);
+TypeList combineTypeLists(TypeList listOne, TypeList listTwo);
 void appendToTypeLists(TypeList*, Type);
 
 
