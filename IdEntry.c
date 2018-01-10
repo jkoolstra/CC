@@ -10,13 +10,12 @@
 
 // PRINTING
 void printProcedure(ProcedureData* data, StringTable table){
-	//printf("ParameterList count : %d - > %d\n", data->parameters->numberOfParameters, data->parameters->parameters[0].strtabIndex);
-	printf("parameters : [\n ");
+	printf("parameters : [ ");
 	for(int i = 0; i < data->parameters->numberOfParameters; i++){
 		ParameterData p = *data->parameters->parameters[i];
-		printf("{ name : %s, base : %s, secondary : %s }\n", retrieveFromStringTable(table, p.strtabIndex), baseTypeString(p.type->base), secondaryTypeString(p.type->secondary));
+		printf("{ name : %s, base : %s, secondary : %s }", retrieveFromStringTable(table, p.strtabIndex), baseTypeString(p.type->base), secondaryTypeString(p.type->secondary));
 	}
-	printf("]\n");
+	printf("]");
 }
 
 void printFunction(FunctionData* data, StringTable table){
@@ -98,7 +97,6 @@ ParameterList createParameterList(StrtabIndexList list, Type t){
     newList.parameters = safeMalloc(list.numberOfIndices * sizeof(ParameterData));
 
     for(int i =0 ; i < list.numberOfIndices; i++){
-		//printf("[%d]\n", list.indices[i]);
         ParameterData *data = safeMalloc(sizeof(ParameterData));
         data->strtabIndex = list.indices[i];
         data->type = safeMalloc(sizeof(Type));
@@ -122,26 +120,31 @@ TypeList createTypeList(Type t){
 
 // OPERATIONS
 void appendParameterLists(ParameterList* list, StrtabIndexList indices, Type t){
+	printf("> %d \n",list->numberOfParameters);
+	for(int i = 0; i < list->numberOfParameters; i++){
+		printf("[%d] %d: \n", i, list->parameters[i]->strtabIndex);
+	}
+
 	int oldLength = list->numberOfParameters;
 	list->numberOfParameters = list->numberOfParameters + indices.numberOfIndices;
     safeRealloc(list->parameters, list->numberOfParameters * sizeof(ParameterData *));
 	int j = 0;
+
     for(int i = oldLength; i < list->numberOfParameters; i++){
-		//printf("%d -> [%d] %s %s\n", i,  indices.indices[j], secondaryTypeString(t.secondary), baseTypeString(t.base));
 		ParameterData data;
         data.strtabIndex = indices.indices[j];
 
 		data.type = safeMalloc(sizeof(Type));
 		memcpy(data.type, &t, sizeof(Type));
 
-		//printf("%d -> [%d] %s %s\n", i,  data.strtabIndex, secondaryTypeString(data.type->secondary), baseTypeString(data.type->base));
-		//memcpy(data->type, &t, sizeof(Type));*/
-
         list->parameters[i] = safeMalloc(sizeof(ParameterData));
 		memcpy(list->parameters[i], &data, sizeof(ParameterData));
-		//printf("%d -> [%d] %s %s\n", i,  list->parameters[i]->strtabIndex, secondaryTypeString(list->parameters[i]->type->secondary), baseTypeString(list->parameters[i]->type->base));
 		j++;
     }
+	printf("-- %d \n",list->numberOfParameters);
+	for(int i = 0; i < list->numberOfParameters; i++){
+		printf("[%d] %d: \n", i, list->parameters[i]->strtabIndex);
+	}
 }
 
 StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList listTwo){

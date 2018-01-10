@@ -96,7 +96,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 36 "mini_pascal.y"
+#line 37 "mini_pascal.y"
 {
     StrtabIndexList indexList;
     ParameterList parameterList;
