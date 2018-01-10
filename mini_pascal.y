@@ -10,13 +10,13 @@
 
     // CHECKING
     void checkIfIdentifierIsDeclared(unsigned);
-    void checkIfIdentifierIsOfType(unsigned, IdType);
-    void checkIfIdentifierIsArray(unsigned index);
+    void checkIdentifierIdType(unsigned, IdType);
+    void checkIdentifierSecondaryType(unsigned, SecondaryType);
+	void checkIfArrayIndexIsInteger(Type t);
+	void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types);
     Type checkTypes(Type, Type, enum yytokentype);
 
-    StrtabIndexList combineIdentifiers(StrtabIndexList, StrtabIndexList);
-    ParameterList createParameterList(StrtabIndexList list, Type t);
-    ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo);
+
 
     void declareFunctionLocallyAsVariable(StrtabIndexList, Type type);
     void declareParametersLocallyAsVariables(ParameterList);
@@ -27,6 +27,7 @@
 
     int yyerror(char *errmsg);
     void errorMessage(char *msg);
+    void warningMessage(char *msg);
 
     SymbolStack stack;
 %}
@@ -35,6 +36,7 @@
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
+    TypeList typeList;
 }
 
 %token PROGRAM FUNCTION PROCEDURE BEG END IF THEN ELSE WHILE DO
@@ -44,6 +46,7 @@
 %type <indexList> Identifier_list
 %type <parameterList> Parameter_list Arguments
 %type <type> Standard_type Type Factor Term Expression Simple_expression
+%type <typeList> Expression_list
 
 %type <indexList> ID INUM RNUM
 
@@ -75,7 +78,7 @@ Declarations    : Declarations VAR Identifier_list ':' Type ';' {
 
 Type            : Standard_type {
                                     $$ = $1;
-                                    $$.secondary = TYPE_SINGLE;
+                                    $$.secondary = TYPE_SCALAR;
                                 }
                 | ARRAY '[' INUM '.''.' INUM ']' OF Standard_type   {
                                                                         $$ = $9;
@@ -149,19 +152,31 @@ Statement       : Variable ASSIGNOP Expression { }
 
 Variable        : ID                          {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
-                                                  checkIfIdentifierIsOfType($1.indices[0], TYPE_VARIABLE);
+                                                  checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
                                               }
                 | ID '[' Expression_list ']'  {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
-                                                  checkIfIdentifierIsOfType($1.indices[0], TYPE_VARIABLE);
-                                                  checkIfIdentifierIsArray($1.indices[0]);
+                                                  checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
+                                                  checkIdentifierSecondaryType($1.indices[0], TYPE_ARRAY);
+												  checkIfMultipleArrayIndicesAreAllIntegers($3);
                                               }
 
-Procedure_statement : ID                          { checkIfIdentifierIsDeclared($1.indices[0]); checkIfIdentifierIsOfType($1.indices[0], TYPE_PROCEDURE); }
-                    | ID '(' Expression_list ')'  { checkIfIdentifierIsDeclared($1.indices[0]); checkIfIdentifierIsOfType($1.indices[0], TYPE_PROCEDURE); }
+Procedure_statement : ID                        {
+													checkIfIdentifierIsDeclared($1.indices[0]);
+													checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
+												}
+                    | ID '(' Expression_list ')'  	{
+														checkIfIdentifierIsDeclared($1.indices[0]);
+														checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
+													}
 
-Expression_list : Expression
-                | Expression_list ',' Expression
+Expression_list : Expression						{
+														$$ = createTypeList($1);
+													}
+                | Expression_list ',' Expression	{
+														appendToTypeLists(&$1, $3);
+														$$ = $1;
+													}
 
 Expression      : Simple_expression                           {
                                                                   $$ = $1;
@@ -192,8 +207,8 @@ Term            : Factor                        {
 
 Factor          : ID                            {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIfIdentifierIsOfType($1.indices[0], TYPE_VARIABLE);
-                                                    // check dat het een scalar is
+                                                    checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
+                                                    checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = data->type;
@@ -201,81 +216,108 @@ Factor          : ID                            {
                                                 }
                 | ID '(' Expression_list ')'    {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIfIdentifierIsOfType($1.indices[0], TYPE_FUNCTION);
+                                                    checkIdentifierIdType($1.indices[0], TYPE_FUNCTION);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
                                                     $$ = data->returnType;
                                                 }
                 | INUM                          {
                                                     $$.base = TYPE_INTEGER;
-                                                    $$.secondary = TYPE_SINGLE;
+                                                    $$.secondary = TYPE_SCALAR;
                                                 }
                 | RNUM                          {
                                                     $$.base = TYPE_REAL;
-                                                    $$.secondary = TYPE_SINGLE;
+                                                    $$.secondary = TYPE_SCALAR;
                                                 }
                 | '(' Expression ')'            {
                                                     $$ = $2;
                                                 }
                 | ID '[' Simple_expression ']'  {   // simple expression moet integer zijn
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIfIdentifierIsOfType($1.indices[0], TYPE_VARIABLE);
-                                                    checkIfIdentifierIsArray($1.indices[0]);
+                                                    checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
+                                                    checkIdentifierSecondaryType($1.indices[0], TYPE_ARRAY);
+													checkIfArrayIndexIsInteger($3);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = data->type;
-                                                    $$.secondary = TYPE_SINGLE;
+                                                    $$.secondary = TYPE_SCALAR;
                                                 }
 
 %%
 // ----------- CHECKING -----
 
+void checkIfArrayIndexIsInteger(Type type){
+	if(type.base != TYPE_INTEGER){
+		char *err;
+		asprintf(&err, "array index should be an integer");
+		errorMessage(err);
+	}
+}
+
+void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types){
+	for(int i =0; i < types.numberOfTypes; i++){
+		checkIfArrayIndexIsInteger(types.types[i]);
+	}
+}
+
 Type checkTypes(Type t1, Type t2, enum yytokentype token){
-  if(token == RELOP){
-    if(t1.secondary == TYPE_ARRAY || t1.secondary == TYPE_ARRAY){
+  switch(token){
+    case RELOP : {
+      if(t1.base != t1.base){
+        char *war;
+        asprintf(&war, "comparing integers with reals");
+        warningMessage(war);
+      }
+      return makeType(TYPE_BOOL, TYPE_SCALAR);
+    }
+    case I_MULOP : {
+      if(t1.base == TYPE_REAL || t2.base == TYPE_REAL){
+        char *err;
+        asprintf(&err, "integer operation on real");
+        errorMessage(err);
+      }
+      return makeType(TYPE_REAL, TYPE_SCALAR);
+    }
+    case R_MULOP : {
+      if(t1.base == TYPE_INTEGER || t2.base == TYPE_INTEGER){
+        char *war;
+        asprintf(&war, "real operation on integer");
+        warningMessage(war);
+      }
+      return makeType(TYPE_REAL, TYPE_SCALAR);
+    }
+    case ADDOP : {
+      if(t1.base == t2.base){ // SAME TYPE NO ISSUE
+        return t1;
+      }
+      return makeType(TYPE_REAL, TYPE_SCALAR);
+    }
+    default: { // SHOULD NEVER OCCUR
       char *err;
-      asprintf(&err, "CANT COMPARE ARRAYS");
+      asprintf(&err, "invalid binary token, something went very very very wrong...");
       errorMessage(err);
+	  return makeType(TYPE_REAL, TYPE_SCALAR);	// stops warning;
     }
-    Type t;
-    t.secondary = TYPE_SINGLE;
-    t.base = TYPE_BOOL;
-    return t;
-  } else {
-    if(t1.secondary == TYPE_ARRAY || t1.secondary == TYPE_ARRAY){
-      char *err;
-      asprintf(&err, "ARRAY ARITHMETICS IS NOT POSSIBLE");
-      errorMessage(err);
-    }
-    if(t1.base == t2.base){ // SAME TYPE NO ISSUE
-      return t1;
-    }
-    Type t;
-    t.secondary = TYPE_SINGLE;
-    t.base = TYPE_REAL;
-    return t;
   }
 }
 
-
-
-void checkIfIdentifierIsArray(unsigned index){
+void checkIdentifierSecondaryType(unsigned index, SecondaryType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   VariableData *data = (VariableData *)entry->data;
-  if(data->type.secondary != TYPE_ARRAY){
+  if(data->type.secondary != t){
     char *err;
-    asprintf(&err, "VARIABLE %s IS A SCALAR AND NOT AN ARRAY", retrieveFromStringTable(*(stack.strTab), index));
+    asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), secondaryTypeString(data->type.secondary), secondaryTypeString(t));
     errorMessage(err);
   }
 }
 
-void checkIfIdentifierIsOfType(unsigned index, IdType t){
+void checkIdentifierIdType(unsigned index, IdType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   if(entry->idType != t){
     IdEntry *shadow = findShadowedFunctionOrProcedure(&stack, index);     // Recursion
     if(shadow == NULL){
       char *err;
-      asprintf(&err, "VARIABLE %s IS A %s AND NOT A %s", retrieveFromStringTable(*(stack.strTab), index), idTypeString(entry->idType), idTypeString(t));
+      asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), idTypeString(entry->idType), idTypeString(t));
       errorMessage(err);
     }
   }
@@ -286,7 +328,7 @@ void checkIfIdentifierIsDeclared(unsigned index){
     if(entry == NULL){
         //printSymbolStack(&stack);
         char *err;
-        asprintf(&err, "VARIABLE %s NOT YET DECLARED", retrieveFromStringTable(*(stack.strTab), index));
+        asprintf(&err, "variable %s is not yet declared", retrieveFromStringTable(*(stack.strTab), index));
         errorMessage(err);
     }
 }
@@ -296,7 +338,7 @@ void checkIfIdentifierIsDeclared(unsigned index){
 void insert(IdEntry entry){
     if(!insertSymbol(&stack, entry)){
         char *err;
-        asprintf(&err, "VARIABLE %s ALREADY DECLARED\n", retrieveFromStringTable(*(stack.strTab), entry.strtabIndex));
+        asprintf(&err, "variable %s is already declared\n", retrieveFromStringTable(*(stack.strTab), entry.strtabIndex));
         errorMessage(err);
     }
 }
@@ -368,64 +410,22 @@ void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
     //printSymbolStack(&stack);
 }
 
-ParameterList createParameterList(StrtabIndexList list, Type t){
-    ParameterList newList; // = safeMalloc(sizeof(ParameterList));
-    newList.numberOfParameters = list.numberOfIndices;
-    newList.parameters = safeMalloc(list.numberOfIndices * sizeof(ParameterData));
-
-    for(int i =0 ; i < list.numberOfIndices; i++){
-        ParameterData data; // = safeMalloc(sizeof(ParameterData));
-        data.strtabIndex = list.indices[i];
-        data.type = t;
-
-        newList.parameters[i] = data;
-    }
-    return newList;
-}
-
-ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo){
-    ParameterList newList;
-    newList.numberOfParameters = listOne.numberOfParameters + listTwo.numberOfParameters;
-    newList.parameters = safeMalloc(newList.numberOfParameters * sizeof(ParameterData));
-    int i;
-    int j;
-    for(i =0 ; i < listOne.numberOfParameters; i++){
-        newList.parameters[i] = listOne.parameters[i];
-    }
-    for(j =0 ; j < listTwo.numberOfParameters; j++){
-        newList.parameters[j+i] = listTwo.parameters[j];
-    }
-    return newList;
-}
-
-StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList listTwo){
-    StrtabIndexList newList;
-    newList.numberOfIndices = listOne.numberOfIndices + listTwo.numberOfIndices;
-    newList.indices = safeMalloc(newList.numberOfIndices * sizeof(unsigned));
-    int i;
-    int j;
-    for(i =0 ; i < listOne.numberOfIndices; i++){
-        newList.indices[i] = listOne.indices[i];
-    }
-    for(j =0 ; j < listTwo.numberOfIndices; j++){
-        newList.indices[j+i] = listTwo.indices[j];
-    }
-    return newList;
-}
-
-
-// ------------- ERRORS -----------------------
+// ------------- ERRORS & WARNINGS -----------------------
 int yyerror(char *errmsg) {
-    char *err = "PARSE ERROR";
+    char *err = "parse error";
     errorMessage(err);
     return 1;
 }
 
 void errorMessage(char *msg){
-    fprintf(stderr, "(%d) %s\n", lineno, msg);
+    fprintf(stderr, "\x1B[31m" "(%d) error : " "\x1B[0m" "%s\n", lineno, msg);
     // Yes, a parse error is a successful (meaningful) result
     freeStringTable(strTab);
     exit(EXIT_SUCCESS);
+}
+
+void warningMessage(char *msg){
+    fprintf(stderr,"\x1B[35m" "(%d) warning : " "\x1B[0m" "%s\n", lineno, msg);
 }
 
 // ------------- MAIN --------------------------

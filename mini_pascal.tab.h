@@ -96,14 +96,15 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 34 "mini_pascal.y"
+#line 35 "mini_pascal.y"
 {
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
+    TypeList typeList;
 }
 /* Line 1529 of yacc.c.  */
-#line 107 "mini_pascal.tab.h"
+#line 108 "mini_pascal.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

@@ -2,6 +2,7 @@
 #define IDENTRY_H
 
 #include "StringTable.h"
+#include "common.h"
 
 #define MAX_NUMBER_OF_PARAMS 97   /* choose a small prime */
 
@@ -14,7 +15,7 @@ typedef enum idType {
 } IdType;
 
 typedef enum secondaryType {
-	TYPE_SINGLE,
+	TYPE_SCALAR,
 	TYPE_ARRAY
 } SecondaryType;
 
@@ -28,6 +29,11 @@ typedef struct type {
 	BaseType base;
 	SecondaryType secondary;
 } Type;
+
+typedef struct typeList {
+	unsigned numberOfTypes;
+	Type *types;
+}	TypeList;
 
 typedef struct variableData {
 	Type type;
@@ -63,9 +69,21 @@ typedef struct idEntry{
 	void *data;
 } IdEntry;
 
-IdEntry makeIdEntry(unsigned);
-
+//PRINTING
 void printEntry(IdEntry entry, StringTable table);
 char *idTypeString(IdType type);
+char *secondaryTypeString(SecondaryType type);
+
+//INITIALIZING
+IdEntry makeIdEntry(unsigned);
+Type makeType(BaseType, SecondaryType);
+ParameterList createParameterList(StrtabIndexList list, Type t);
+TypeList createTypeList(Type t);
+
+//OPERATIONS
+StrtabIndexList combineIdentifiers(StrtabIndexList, StrtabIndexList);
+ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo);
+void appendToTypeLists(TypeList*, Type);
+
 
 #endif

@@ -134,13 +134,13 @@
 
     // CHECKING
     void checkIfIdentifierIsDeclared(unsigned);
-    void checkIfIdentifierIsOfType(unsigned, IdType);
-    void checkIfIdentifierIsArray(unsigned index);
+    void checkIdentifierIdType(unsigned, IdType);
+    void checkIdentifierSecondaryType(unsigned, SecondaryType);
+	void checkIfArrayIndexIsInteger(Type t);
+	void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types);
     Type checkTypes(Type, Type, enum yytokentype);
 
-    StrtabIndexList combineIdentifiers(StrtabIndexList, StrtabIndexList);
-    ParameterList createParameterList(StrtabIndexList list, Type t);
-    ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo);
+
 
     void declareFunctionLocallyAsVariable(StrtabIndexList, Type type);
     void declareParametersLocallyAsVariables(ParameterList);
@@ -151,6 +151,7 @@
 
     int yyerror(char *errmsg);
     void errorMessage(char *msg);
+    void warningMessage(char *msg);
 
     SymbolStack stack;
 
@@ -175,14 +176,15 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 34 "mini_pascal.y"
+#line 35 "mini_pascal.y"
 {
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
+    TypeList typeList;
 }
 /* Line 193 of yacc.c.  */
-#line 186 "mini_pascal.tab.c"
+#line 188 "mini_pascal.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -195,7 +197,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 199 "mini_pascal.tab.c"
+#line 201 "mini_pascal.tab.c"
 
 #ifdef short
 # undef short
@@ -500,11 +502,11 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    55,    55,    65,    66,    70,    73,    76,    80,    85,
-      88,    92,    93,    95,   101,   109,   117,   120,   126,   129,
-     134,   138,   139,   141,   142,   144,   145,   146,   147,   148,
-     150,   154,   160,   161,   163,   164,   166,   169,   173,   176,
-     179,   183,   186,   189,   193,   202,   209,   213,   217,   220
+       0,    58,    58,    68,    69,    73,    76,    79,    83,    88,
+      91,    95,    96,    98,   104,   112,   120,   123,   129,   132,
+     137,   141,   142,   144,   145,   147,   148,   149,   150,   151,
+     153,   157,   164,   168,   173,   176,   181,   184,   188,   191,
+     194,   198,   201,   204,   208,   217,   224,   228,   232,   235
 };
 #endif
 
@@ -1479,41 +1481,41 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 61 "mini_pascal.y"
+#line 64 "mini_pascal.y"
     {
                     //declareIdentifiers($2, makeEmptyType(), TYPE_PROGRAM);
                 ;}
     break;
 
   case 3:
-#line 65 "mini_pascal.y"
+#line 68 "mini_pascal.y"
     { (yyval.indexList) = (yyvsp[(1) - (1)].indexList); ;}
     break;
 
   case 4:
-#line 66 "mini_pascal.y"
+#line 69 "mini_pascal.y"
     {
                                                 (yyval.indexList) = combineIdentifiers((yyvsp[(1) - (3)].indexList), (yyvsp[(3) - (3)].indexList));
                                             ;}
     break;
 
   case 5:
-#line 70 "mini_pascal.y"
+#line 73 "mini_pascal.y"
     {
                                                                     declareVariable((yyvsp[(3) - (6)].indexList), (yyvsp[(5) - (6)].type));
                                                                 ;}
     break;
 
   case 7:
-#line 76 "mini_pascal.y"
+#line 79 "mini_pascal.y"
     {
                                     (yyval.type) = (yyvsp[(1) - (1)].type);
-                                    (yyval.type).secondary = TYPE_SINGLE;
+                                    (yyval.type).secondary = TYPE_SCALAR;
                                 ;}
     break;
 
   case 8:
-#line 80 "mini_pascal.y"
+#line 83 "mini_pascal.y"
     {
                                                                         (yyval.type) = (yyvsp[(9) - (9)].type);
                                                                         (yyval.type).secondary = TYPE_ARRAY;
@@ -1521,28 +1523,28 @@ yyreduce:
     break;
 
   case 9:
-#line 85 "mini_pascal.y"
+#line 88 "mini_pascal.y"
     {
                                 (yyval.type).base = TYPE_INTEGER ;
                             ;}
     break;
 
   case 10:
-#line 88 "mini_pascal.y"
+#line 91 "mini_pascal.y"
     {
                                 (yyval.type).base = TYPE_REAL ;
                             ;}
     break;
 
   case 13:
-#line 97 "mini_pascal.y"
+#line 100 "mini_pascal.y"
     {
                                                     outdent(&stack);
                                                 ;}
     break;
 
   case 14:
-#line 103 "mini_pascal.y"
+#line 106 "mini_pascal.y"
     {
                                                             declareFunction((yyvsp[(2) - (6)].indexList), (yyvsp[(5) - (6)].type), (yyvsp[(3) - (6)].parameterList));
                                                             indent(&stack);
@@ -1552,7 +1554,7 @@ yyreduce:
     break;
 
   case 15:
-#line 111 "mini_pascal.y"
+#line 114 "mini_pascal.y"
     {
                                         declareProcedure((yyvsp[(2) - (4)].indexList), (yyvsp[(3) - (4)].parameterList));
                                         indent(&stack);
@@ -1561,14 +1563,14 @@ yyreduce:
     break;
 
   case 16:
-#line 117 "mini_pascal.y"
+#line 120 "mini_pascal.y"
     {
                                                 (yyval.parameterList) = (yyvsp[(2) - (3)].parameterList);
                                             ;}
     break;
 
   case 17:
-#line 120 "mini_pascal.y"
+#line 123 "mini_pascal.y"
     {
                                                 ParameterList list;
                                                 list.numberOfParameters = 0;
@@ -1577,14 +1579,14 @@ yyreduce:
     break;
 
   case 18:
-#line 126 "mini_pascal.y"
+#line 129 "mini_pascal.y"
     {
                                                 (yyval.parameterList) = createParameterList((yyvsp[(1) - (3)].indexList), (yyvsp[(3) - (3)].type));
                                             ;}
     break;
 
   case 19:
-#line 129 "mini_pascal.y"
+#line 132 "mini_pascal.y"
     {
                                                                     ParameterList secondList = createParameterList((yyvsp[(3) - (5)].indexList), (yyvsp[(5) - (5)].type));
                                                                     (yyval.parameterList) = combineParameterLists((yyvsp[(1) - (5)].parameterList), secondList);
@@ -1592,99 +1594,121 @@ yyreduce:
     break;
 
   case 25:
-#line 144 "mini_pascal.y"
+#line 147 "mini_pascal.y"
     { ;}
     break;
 
   case 30:
-#line 150 "mini_pascal.y"
+#line 153 "mini_pascal.y"
     {
                                                   checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
-                                                  checkIfIdentifierIsOfType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
+                                                  checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
                                               ;}
     break;
 
   case 31:
-#line 154 "mini_pascal.y"
+#line 157 "mini_pascal.y"
     {
                                                   checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
-                                                  checkIfIdentifierIsOfType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
-                                                  checkIfIdentifierIsArray((yyvsp[(1) - (4)].indexList).indices[0]);
+                                                  checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
+                                                  checkIdentifierSecondaryType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_ARRAY);
+												  checkIfMultipleArrayIndicesAreAllIntegers((yyvsp[(3) - (4)].typeList));
                                               ;}
     break;
 
   case 32:
-#line 160 "mini_pascal.y"
-    { checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]); checkIfIdentifierIsOfType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_PROCEDURE); ;}
+#line 164 "mini_pascal.y"
+    {
+													checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
+													checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_PROCEDURE);
+												;}
     break;
 
   case 33:
-#line 161 "mini_pascal.y"
-    { checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]); checkIfIdentifierIsOfType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_PROCEDURE); ;}
+#line 168 "mini_pascal.y"
+    {
+														checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
+														checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_PROCEDURE);
+													;}
+    break;
+
+  case 34:
+#line 173 "mini_pascal.y"
+    {
+														(yyval.typeList) = createTypeList((yyvsp[(1) - (1)].type));
+													;}
+    break;
+
+  case 35:
+#line 176 "mini_pascal.y"
+    {
+														appendToTypeLists(&(yyvsp[(1) - (3)].typeList), (yyvsp[(3) - (3)].type));
+														(yyval.typeList) = (yyvsp[(1) - (3)].typeList);
+													;}
     break;
 
   case 36:
-#line 166 "mini_pascal.y"
+#line 181 "mini_pascal.y"
     {
                                                                   (yyval.type) = (yyvsp[(1) - (1)].type);
                                                               ;}
     break;
 
   case 37:
-#line 169 "mini_pascal.y"
+#line 184 "mini_pascal.y"
     {
                                                                   (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), RELOP);
                                                               ;}
     break;
 
   case 38:
-#line 173 "mini_pascal.y"
+#line 188 "mini_pascal.y"
     {
                                                         (yyval.type) = (yyvsp[(1) - (1)].type);
                                                     ;}
     break;
 
   case 39:
-#line 176 "mini_pascal.y"
+#line 191 "mini_pascal.y"
     {
                                                         (yyval.type) = (yyvsp[(2) - (2)].type);
                                                     ;}
     break;
 
   case 40:
-#line 179 "mini_pascal.y"
+#line 194 "mini_pascal.y"
     {
                                                         (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), ADDOP);
                                                     ;}
     break;
 
   case 41:
-#line 183 "mini_pascal.y"
+#line 198 "mini_pascal.y"
     {
                                                     (yyval.type) = (yyvsp[(1) - (1)].type);
                                                 ;}
     break;
 
   case 42:
-#line 186 "mini_pascal.y"
+#line 201 "mini_pascal.y"
     {
                                                     (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), R_MULOP);
                                                 ;}
     break;
 
   case 43:
-#line 189 "mini_pascal.y"
+#line 204 "mini_pascal.y"
     {
                                                     (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), I_MULOP);
                                                 ;}
     break;
 
   case 44:
-#line 193 "mini_pascal.y"
+#line 208 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
-                                                    checkIfIdentifierIsOfType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
-                                                    // check dat het een scalar is
+                                                    checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
+                                                    checkIdentifierSecondaryType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_SCALAR);
                                                     IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (1)].indexList).indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     (yyval.type) = data->type;
@@ -1693,10 +1717,10 @@ yyreduce:
     break;
 
   case 45:
-#line 202 "mini_pascal.y"
+#line 217 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
-                                                    checkIfIdentifierIsOfType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_FUNCTION);
+                                                    checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_FUNCTION);
                                                     IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (4)].indexList).indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
                                                     (yyval.type) = data->returnType;
@@ -1704,44 +1728,45 @@ yyreduce:
     break;
 
   case 46:
-#line 209 "mini_pascal.y"
+#line 224 "mini_pascal.y"
     {
                                                     (yyval.type).base = TYPE_INTEGER;
-                                                    (yyval.type).secondary = TYPE_SINGLE;
+                                                    (yyval.type).secondary = TYPE_SCALAR;
                                                 ;}
     break;
 
   case 47:
-#line 213 "mini_pascal.y"
+#line 228 "mini_pascal.y"
     {
                                                     (yyval.type).base = TYPE_REAL;
-                                                    (yyval.type).secondary = TYPE_SINGLE;
+                                                    (yyval.type).secondary = TYPE_SCALAR;
                                                 ;}
     break;
 
   case 48:
-#line 217 "mini_pascal.y"
+#line 232 "mini_pascal.y"
     {
                                                     (yyval.type) = (yyvsp[(2) - (3)].type);
                                                 ;}
     break;
 
   case 49:
-#line 220 "mini_pascal.y"
+#line 235 "mini_pascal.y"
     {   // simple expression moet integer zijn
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
-                                                    checkIfIdentifierIsOfType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
-                                                    checkIfIdentifierIsArray((yyvsp[(1) - (4)].indexList).indices[0]);
+                                                    checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
+                                                    checkIdentifierSecondaryType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_ARRAY);
+													checkIfArrayIndexIsInteger((yyvsp[(3) - (4)].type));
                                                     IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (4)].indexList).indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     (yyval.type) = data->type;
-                                                    (yyval.type).secondary = TYPE_SINGLE;
+                                                    (yyval.type).secondary = TYPE_SCALAR;
                                                 ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1745 "mini_pascal.tab.c"
+#line 1770 "mini_pascal.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1955,56 +1980,82 @@ yyreturn:
 }
 
 
-#line 230 "mini_pascal.y"
+#line 246 "mini_pascal.y"
 
 // ----------- CHECKING -----
 
+void checkIfArrayIndexIsInteger(Type type){
+	if(type.base != TYPE_INTEGER){
+		char *err;
+		asprintf(&err, "array index should be an integer");
+		errorMessage(err);
+	}
+}
+
+void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types){
+	for(int i =0; i < types.numberOfTypes; i++){
+		checkIfArrayIndexIsInteger(types.types[i]);
+	}
+}
+
 Type checkTypes(Type t1, Type t2, enum yytokentype token){
-  if(token == RELOP){
-    if(t1.secondary == TYPE_ARRAY || t1.secondary == TYPE_ARRAY){
+  switch(token){
+    case RELOP : {
+      if(t1.base != t1.base){
+        char *war;
+        asprintf(&war, "comparing integers with reals");
+        warningMessage(war);
+      }
+      return makeType(TYPE_BOOL, TYPE_SCALAR);
+    }
+    case I_MULOP : {
+      if(t1.base == TYPE_REAL || t2.base == TYPE_REAL){
+        char *err;
+        asprintf(&err, "integer operation on real");
+        errorMessage(err);
+      }
+      return makeType(TYPE_REAL, TYPE_SCALAR);
+    }
+    case R_MULOP : {
+      if(t1.base == TYPE_INTEGER || t2.base == TYPE_INTEGER){
+        char *war;
+        asprintf(&war, "real operation on integer");
+        warningMessage(war);
+      }
+      return makeType(TYPE_REAL, TYPE_SCALAR);
+    }
+    case ADDOP : {
+      if(t1.base == t2.base){ // SAME TYPE NO ISSUE
+        return t1;
+      }
+      return makeType(TYPE_REAL, TYPE_SCALAR);
+    }
+    default: { // SHOULD NEVER OCCUR
       char *err;
-      asprintf(&err, "CANT COMPARE ARRAYS");
+      asprintf(&err, "invalid binary token, something went very very very wrong...");
       errorMessage(err);
+	  return makeType(TYPE_REAL, TYPE_SCALAR);	// stops warning;
     }
-    Type t;
-    t.secondary = TYPE_SINGLE;
-    t.base = TYPE_BOOL;
-    return t;
-  } else {
-    if(t1.secondary == TYPE_ARRAY || t1.secondary == TYPE_ARRAY){
-      char *err;
-      asprintf(&err, "ARRAY ARITHMETICS IS NOT POSSIBLE");
-      errorMessage(err);
-    }
-    if(t1.base == t2.base){ // SAME TYPE NO ISSUE
-      return t1;
-    }
-    Type t;
-    t.secondary = TYPE_SINGLE;
-    t.base = TYPE_REAL;
-    return t;
   }
 }
 
-
-
-void checkIfIdentifierIsArray(unsigned index){
+void checkIdentifierSecondaryType(unsigned index, SecondaryType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   VariableData *data = (VariableData *)entry->data;
-  if(data->type.secondary != TYPE_ARRAY){
+  if(data->type.secondary != t){
     char *err;
-    asprintf(&err, "VARIABLE %s IS A SCALAR AND NOT AN ARRAY", retrieveFromStringTable(*(stack.strTab), index));
+    asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), secondaryTypeString(data->type.secondary), secondaryTypeString(t));
     errorMessage(err);
   }
 }
 
-void checkIfIdentifierIsOfType(unsigned index, IdType t){
+void checkIdentifierIdType(unsigned index, IdType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   if(entry->idType != t){
     IdEntry *shadow = findShadowedFunctionOrProcedure(&stack, index);     // Recursion
     if(shadow == NULL){
       char *err;
-      asprintf(&err, "VARIABLE %s IS A %s AND NOT A %s", retrieveFromStringTable(*(stack.strTab), index), idTypeString(entry->idType), idTypeString(t));
+      asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), idTypeString(entry->idType), idTypeString(t));
       errorMessage(err);
     }
   }
@@ -2015,7 +2066,7 @@ void checkIfIdentifierIsDeclared(unsigned index){
     if(entry == NULL){
         //printSymbolStack(&stack);
         char *err;
-        asprintf(&err, "VARIABLE %s NOT YET DECLARED", retrieveFromStringTable(*(stack.strTab), index));
+        asprintf(&err, "variable %s is not yet declared", retrieveFromStringTable(*(stack.strTab), index));
         errorMessage(err);
     }
 }
@@ -2025,7 +2076,7 @@ void checkIfIdentifierIsDeclared(unsigned index){
 void insert(IdEntry entry){
     if(!insertSymbol(&stack, entry)){
         char *err;
-        asprintf(&err, "VARIABLE %s ALREADY DECLARED\n", retrieveFromStringTable(*(stack.strTab), entry.strtabIndex));
+        asprintf(&err, "variable %s is already declared\n", retrieveFromStringTable(*(stack.strTab), entry.strtabIndex));
         errorMessage(err);
     }
 }
@@ -2097,64 +2148,22 @@ void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
     //printSymbolStack(&stack);
 }
 
-ParameterList createParameterList(StrtabIndexList list, Type t){
-    ParameterList newList; // = safeMalloc(sizeof(ParameterList));
-    newList.numberOfParameters = list.numberOfIndices;
-    newList.parameters = safeMalloc(list.numberOfIndices * sizeof(ParameterData));
-
-    for(int i =0 ; i < list.numberOfIndices; i++){
-        ParameterData data; // = safeMalloc(sizeof(ParameterData));
-        data.strtabIndex = list.indices[i];
-        data.type = t;
-
-        newList.parameters[i] = data;
-    }
-    return newList;
-}
-
-ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo){
-    ParameterList newList;
-    newList.numberOfParameters = listOne.numberOfParameters + listTwo.numberOfParameters;
-    newList.parameters = safeMalloc(newList.numberOfParameters * sizeof(ParameterData));
-    int i;
-    int j;
-    for(i =0 ; i < listOne.numberOfParameters; i++){
-        newList.parameters[i] = listOne.parameters[i];
-    }
-    for(j =0 ; j < listTwo.numberOfParameters; j++){
-        newList.parameters[j+i] = listTwo.parameters[j];
-    }
-    return newList;
-}
-
-StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList listTwo){
-    StrtabIndexList newList;
-    newList.numberOfIndices = listOne.numberOfIndices + listTwo.numberOfIndices;
-    newList.indices = safeMalloc(newList.numberOfIndices * sizeof(unsigned));
-    int i;
-    int j;
-    for(i =0 ; i < listOne.numberOfIndices; i++){
-        newList.indices[i] = listOne.indices[i];
-    }
-    for(j =0 ; j < listTwo.numberOfIndices; j++){
-        newList.indices[j+i] = listTwo.indices[j];
-    }
-    return newList;
-}
-
-
-// ------------- ERRORS -----------------------
+// ------------- ERRORS & WARNINGS -----------------------
 int yyerror(char *errmsg) {
-    char *err = "PARSE ERROR";
+    char *err = "parse error";
     errorMessage(err);
     return 1;
 }
 
 void errorMessage(char *msg){
-    fprintf(stderr, "(%d) %s\n", lineno, msg);
+    fprintf(stderr, "\x1B[31m" "(%d) error : " "\x1B[0m" "%s\n", lineno, msg);
     // Yes, a parse error is a successful (meaningful) result
     freeStringTable(strTab);
     exit(EXIT_SUCCESS);
+}
+
+void warningMessage(char *msg){
+    fprintf(stderr,"\x1B[35m" "(%d) warning : " "\x1B[0m" "%s\n", lineno, msg);
 }
 
 // ------------- MAIN --------------------------
