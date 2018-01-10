@@ -9,13 +9,45 @@
 #include "common.h"
 
 // PRINTING
+void printProcedure(ProcedureData* data, StringTable table){
+	printf("parameters : [ \n");
+	for(int i = 0; i < data->parameters->numberOfParameters; i++){
+		ParameterData p = data->parameters->parameters[i];
+		printf("{ name : %s, base : %s, secondary : %s }", retrieveFromStringTable(table, p.strtabIndex), baseTypeString(p.type.base), secondaryTypeString(p.type.secondary));
+	}
+	printf("]");
+}
+
+void printFunction(FunctionData* data, StringTable table){
+	printf("base_return : %s, secondary_return: %s, parameters : [ ", baseTypeString(data->returnType.base), secondaryTypeString(data->returnType.secondary));
+	for(int i = 0; i < data->parameters->numberOfParameters; i++){
+		ParameterData p = data->parameters->parameters[i];
+		printf("{ name : %s, base : %s, secondary : %s }", retrieveFromStringTable(table, p.strtabIndex), baseTypeString(p.type.base), secondaryTypeString(p.type.secondary));
+	}
+	printf("]");
+}
+
+void printVariable(VariableData* data, StringTable table){
+	printf("base : %s, secondary: %s", baseTypeString(data->type.base), secondaryTypeString(data->type.secondary));
+}
+
+void printData(IdType t, void* data, StringTable table){
+	printf("{");
+	switch(t){
+		case TYPE_VARIABLE : printVariable((VariableData *)data, table); return;
+		case TYPE_PROCEDURE : printProcedure((ProcedureData *)data, table); return;
+		case TYPE_FUNCTION : printFunction((FunctionData *)data, table); return;
+	}
+	printf("}");
+}
+
 void printEntry(IdEntry entry, StringTable table){
       unsigned index = entry.strtabIndex;
       printf("{ index : %u , string : %s", index, retrieveFromStringTable(table, index));
-      /*printf(" idType : ");
-      printIdType(entry.idType);
-      printData(entry.idType, entry.data);*/
-      printf(" }");
+      printf(" idType : %s", idTypeString(entry.idType));
+	  printf(", data :");
+      printData(entry.idType, entry.data, table);
+      printf(" }\n");
 }
 
 char *idTypeString(IdType type){
@@ -36,6 +68,14 @@ char *secondaryTypeString(SecondaryType type){
   }
 }
 
+char *baseTypeString(BaseType type){
+  switch(type) {
+      case TYPE_INTEGER : return "INTEGER";
+      case TYPE_REAL : return "REAL";
+      default: return "BOOL";
+  }
+}
+
 // INITIALIZING
 
 IdEntry makeIdEntry(unsigned index){
@@ -51,17 +91,17 @@ Type makeType(BaseType tb, SecondaryType ts){
   return t;
 }
 
-ParameterList createParameterList(StrtabIndexList list, Type t){
-    ParameterList newList; // = safeMalloc(sizeof(ParameterList));
-    newList.numberOfParameters = list.numberOfIndices;
-    newList.parameters = safeMalloc(list.numberOfIndices * sizeof(ParameterData));
+ParameterList *createParameterList(StrtabIndexList list, Type t){
+    ParameterList *newList = safeMalloc(sizeof(ParameterList));
+    newList->numberOfParameters = list.numberOfIndices;
+    newList->parameters = safeMalloc(list.numberOfIndices * sizeof(ParameterData));
 
     for(int i =0 ; i < list.numberOfIndices; i++){
         ParameterData data; // = safeMalloc(sizeof(ParameterData));
         data.strtabIndex = list.indices[i];
         data.type = t;
 
-        newList.parameters[i] = data;
+        newList->parameters[i] = data;
     }
     return newList;
 }
@@ -77,19 +117,20 @@ TypeList createTypeList(Type t){
 }
 
 // OPERATIONS
-ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo){
-    ParameterList newList;
-    newList.numberOfParameters = listOne.numberOfParameters + listTwo.numberOfParameters;
-    newList.parameters = safeMalloc(newList.numberOfParameters * sizeof(ParameterData));
-    int i;
-    int j;
-    for(i =0 ; i < listOne.numberOfParameters; i++){
-        newList.parameters[i] = listOne.parameters[i];
+void appendParameterLists(ParameterList* list, StrtabIndexList indices, Type t){
+	int oldLength = list->numberOfParameters;
+	list->numberOfParameters = list->numberOfParameters + indices.numberOfIndices;
+    safeRealloc(list->parameters, list->numberOfParameters * sizeof(ParameterData));
+	int j = 0;
+    for(int i = oldLength; i < list->numberOfParameters; i++){
+		j++;
+		ParameterData data;
+        data.strtabIndex = indices.indices[j];
+        data.type = t;
+
+        list->parameters[i] = data;
     }
-    for(j =0 ; j < listTwo.numberOfParameters; j++){
-        newList.parameters[j+i] = listTwo.parameters[j];
-    }
-    return newList;
+
 }
 
 StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList listTwo){
@@ -109,6 +150,7 @@ StrtabIndexList combineIdentifiers(StrtabIndexList listOne, StrtabIndexList list
 
 void appendToTypeLists(TypeList* list, Type t){
     list->numberOfTypes = list->numberOfTypes + 1;
+	//printf("Paramaterlist is now : %d long \n", list->numberOfTypes);
     safeRealloc(list->types, list->numberOfTypes * sizeof(Type));
     list->types[list->numberOfTypes-1] = t;
 }

@@ -7,7 +7,6 @@
 #define MAX_NUMBER_OF_PARAMS 97   /* choose a small prime */
 
 typedef enum idType {
-	NO_ID_TYPE,
 	TYPE_PROGRAM,
 	TYPE_FUNCTION,
 	TYPE_PROCEDURE,
@@ -73,16 +72,17 @@ typedef struct idEntry{
 void printEntry(IdEntry entry, StringTable table);
 char *idTypeString(IdType type);
 char *secondaryTypeString(SecondaryType type);
+char *baseTypeString(BaseType type);
 
 //INITIALIZING
 IdEntry makeIdEntry(unsigned);
 Type makeType(BaseType, SecondaryType);
-ParameterList createParameterList(StrtabIndexList list, Type t);
+ParameterList *createParameterList(StrtabIndexList list, Type t);
 TypeList createTypeList(Type t);
 
 //OPERATIONS
 StrtabIndexList combineIdentifiers(StrtabIndexList, StrtabIndexList);
-ParameterList combineParameterLists(ParameterList listOne, ParameterList listTwo);
+void appendParameterLists(ParameterList*, StrtabIndexList, Type);
 void appendToTypeLists(TypeList*, Type);
 
 

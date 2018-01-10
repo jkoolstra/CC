@@ -33,8 +33,10 @@ IdEntry *lookupSymbol(SymbolStack* stack, unsigned strtabIndex){
 
 IdEntry *findShadowedFunctionOrProcedure(SymbolStack* stack, unsigned strtabIndex){
   if(stack->curLvl == 1){  //Shadowing not possible
+	  //printf("Shadowing possible\n");
     IdEntry *entry = lookupSymbolInTable(&stack->tables[0], strtabIndex);
     if(entry != NULL && (entry->idType == TYPE_FUNCTION || entry->idType == TYPE_PROCEDURE) ){
+		//printf("Shadowing Worked\n");
       return entry;
     }
   }

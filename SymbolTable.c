@@ -73,7 +73,7 @@ int insertSymbolInTable(SymbolTable* table, IdEntry entry) {
   bucket nxt = table->hashtab[h];
   table->hashtab[h] = malloc(sizeof(struct bucket));
   table->hashtab[h]->next = nxt;
-  table->hashtab[h]->key = entry.strtabIndex; 
+  table->hashtab[h]->key = entry.strtabIndex;
   table->hashtab[h]->data = malloc(sizeof(IdEntry));
   memcpy(table->hashtab[h]->data, &entry, sizeof(IdEntry));
   return 1;
@@ -94,7 +94,6 @@ void printSymbolTable(SymbolTable* table){
       printEntry(*entry, *table->stringTab);
       b = b->next;
     }
-    printf("\n");
+	printf("\n");
   }
 }
-

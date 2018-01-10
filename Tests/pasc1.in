@@ -1,12 +1,10 @@
 { Pascal implementation of Euclid’s algorithm.
 }
 PROGRAM euclid (input, output);
-var x : integer;
-var x : integer;
+var x,a,b : integer;
+var c : real;
 
 FUNCTION gcd_recursive(u, v : integer) : integer;
-var x : integer;
-var x : integer;
 BEGIN
   IF u mod v <> 0 THEN
     gcd_recursive := gcd_recursive(v, u mod v)
@@ -15,6 +13,5 @@ BEGIN
 END;
 { main program starts here }
 BEGIN
-  readln(a, b);
-  writeln(gcd_recursive(a,b))
+  x := gcd_recursive(a,c)
 END.
