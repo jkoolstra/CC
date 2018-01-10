@@ -9,7 +9,7 @@
 #include "StringTable.h"
 #include "StringTable.h"
 
-#define MAX_INDENT 2 
+#define MAX_INDENT 2
 
 typedef struct symbolStack {
 	unsigned curLvl;
@@ -20,7 +20,8 @@ typedef struct symbolStack {
 SymbolStack initSymbolStack(StringTable*);
 void freeSymbolStack(SymbolStack*);
 IdEntry *lookupSymbol(SymbolStack*, unsigned);
-void insertSymbol(SymbolStack*, IdEntry);
+IdEntry *findShadowedFunctionOrProcedure(SymbolStack* stack, unsigned strtabIndex);
+int insertSymbol(SymbolStack*, IdEntry);
 void indent(SymbolStack*);
 void outdent(SymbolStack*);
 void printSymbolStack(SymbolStack*);

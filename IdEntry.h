@@ -11,20 +11,18 @@ typedef enum idType {
 	TYPE_FUNCTION,
 	TYPE_PROCEDURE,
 	TYPE_VARIABLE
-} IdType; 
-
-typedef enum baseType {
-	NO_BASE_TYPE,
-	TYPE_SINGLE,
-	TYPE_ARRAY
-} BaseType;
+} IdType;
 
 typedef enum secondaryType {
-	NO_SECONDARY_TYPE,
-	TYPE_INTEGER,
-	TYPE_REAL,
-	TYPE_BOOL
-} SecondaryType ;
+	TYPE_SINGLE,
+	TYPE_ARRAY
+} SecondaryType;
+
+typedef enum baseType {
+	TYPE_INTEGER = 1,
+	TYPE_REAL = 2,
+	TYPE_BOOL = 3
+} BaseType;
 
 typedef struct type {
 	BaseType base;
@@ -42,7 +40,7 @@ typedef struct parameterData {
 
 typedef struct parameterList {
     unsigned numberOfParameters;
-	ParameterData *parameters;
+		ParameterData *parameters;
 } ParameterList;
 
 typedef struct functionData {
@@ -66,6 +64,8 @@ typedef struct idEntry{
 } IdEntry;
 
 IdEntry makeIdEntry(unsigned);
+
 void printEntry(IdEntry entry, StringTable table);
+char *idTypeString(IdType type);
 
 #endif

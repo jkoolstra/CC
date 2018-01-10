@@ -31,7 +31,8 @@ ID          ("_"|{CHARACTER})("_"|{CHARACTER}|{DIGIT})*
 ASSIGNOP    ":="
 RELOP       "<"|"<="|">"|">="|"<>"|"="
 ADDOP       {SIGN}
-MULOP       "*"|"/"|"div"|"mod"
+R_MULOP     "*"|"/"
+I_MULOP     "div"|"mod"
 
 %%
 
@@ -62,7 +63,8 @@ end                 { return END; }
 {ASSIGNOP}          { return ASSIGNOP; }
 {RELOP}             { return RELOP; }
 {ADDOP}             { return ADDOP; }
-{MULOP}             { return MULOP; }
+{R_MULOP}           { return R_MULOP; }
+{I_MULOP}           { return I_MULOP; }
 {INTEGER_NUMBER}    { return INUM; }
 {REAL_NUMBER}       { return RNUM; }
 {ID}                { makeIdentifier(); return ID;  }
@@ -77,14 +79,3 @@ void makeIdentifier(){
     yylval.indexList.indices[0] = index;
     yylval.indexList.numberOfIndices = 1;
 }
-
-
-
-
-
-
-
-
-
-
-

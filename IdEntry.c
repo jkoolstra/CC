@@ -17,20 +17,20 @@ IdEntry makeIdEntry(unsigned index){
 
 void printType(Type t){
 
-  printf("{ baseType : ");
-  if(t.base == TYPE_SINGLE){
+  printf("{ secondary : ");
+  if(t.secondary == TYPE_SINGLE){
         printf("TYPE_SINGLE");
-      } else if (t.base == TYPE_ARRAY){
+      } else if (t.secondary == TYPE_ARRAY){
         printf("TYPE_ARRAY");
       } else {
         printf("NO_BASE_TYPE");
       }
-    printf(", secondaryType : ");
-  if(t.secondary == TYPE_INTEGER){
+    printf(", base : ");
+  if(t.base == TYPE_INTEGER){
         printf("TYPE_INTEGER");
-      } else if (t.secondary == TYPE_REAL){
+      } else if (t.base == TYPE_REAL){
         printf("TYPE_REAL");
-      } else if (t.secondary == TYPE_BOOL){
+      } else if (t.base == TYPE_BOOL){
         printf("TYPE_BOOL");
       } else {
         printf("NO_SECONDARY_TYPE");
@@ -49,15 +49,14 @@ void printVariableData(VariableData* data){
 }
 
 void printIdType(IdType type){
-  printf(" idType : ");
   if(type == TYPE_PROGRAM){
-        printf("TYPE_PROGRAM");
+        printf("PROGRAM");
       } else if (type == TYPE_FUNCTION){
-        printf("TYPE_FUNCTION");
+        printf("FUNCTION");
       } else if (type == TYPE_PROCEDURE){
-        printf("TYPE_PROCEDURE");
+        printf("PROCEDURE");
       } else if (type == TYPE_VARIABLE){
-        printf("TYPE_VARIABLE");
+        printf("VARIABLE");
       } else {
         printf("NO_ID_TYPE");
       }
@@ -82,15 +81,22 @@ void printData(IdType type, void *data){
 void printEntry(IdEntry entry, StringTable table){
       unsigned index = entry.strtabIndex;
       printf("{ index : %u , string : %s", index, retrieveFromStringTable(table, index));
+      printf(" idType : ");
       printIdType(entry.idType);
       printData(entry.idType, entry.data);
       printf(" }");
 }
 
-
-
-
-
-
-
-
+char *idTypeString(IdType type){
+  if(type == TYPE_PROGRAM){
+        return "PROGRAM";
+      } else if (type == TYPE_FUNCTION){
+        return "FUNCTION";
+      } else if (type == TYPE_PROCEDURE){
+        return "PROCEDURE";
+      } else if (type == TYPE_VARIABLE){
+        return "VARIABLE";
+      } else {
+        return "NO_ID_TYPE";
+      }
+}

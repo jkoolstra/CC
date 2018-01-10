@@ -31,20 +31,31 @@ IdEntry *lookupSymbol(SymbolStack* stack, unsigned strtabIndex){
   return NULL;
 }
 
-void insertSymbol(SymbolStack* stack, IdEntry entry){
-  //printf("INSERTING AT LAYER\n");
-  insertSymbolInTable(&stack->tables[stack->curLvl], entry);
+IdEntry *findShadowedFunctionOrProcedure(SymbolStack* stack, unsigned strtabIndex){
+  if(stack->curLvl == 1){  //Shadowing not possible
+    IdEntry *entry = lookupSymbolInTable(&stack->tables[0], strtabIndex);
+    if(entry != NULL && (entry->idType == TYPE_FUNCTION || entry->idType == TYPE_PROCEDURE) ){
+      return entry;
+    }
+  }
+  return NULL;
+}
+
+
+int insertSymbol(SymbolStack* stack, IdEntry entry){
+  //printf("INSERTING : %d\n", entry.strtabIndex);
+  return insertSymbolInTable(&stack->tables[stack->curLvl], entry);
 }
 
 void indent(SymbolStack* stack){
-  printf("INDENTING\n");
+  //printf("INDENTING\n");
   stack->curLvl++;
   StringTable *tab = stack->strTab;
   stack->tables[stack->curLvl] = initSymbolTable(tab);
 }
 
 void outdent(SymbolStack* stack){
-  printf("OUTDENTING\n");
+  //printf("OUTDENTING\n");
   freeSymbolTable(&stack->tables[stack->curLvl]);
   stack->curLvl--;
 }

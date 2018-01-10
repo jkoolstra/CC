@@ -1,0 +1,113 @@
+Information about testcases:
+
+Lab 3b:
+All these testcases are valid miniPascal code, so they should
+all pass without problems in your compiler and semantic analysis.
+
+Lab 4:
+Since all these testcases are valid miniPascal, they should
+all be able to be compiled without problems. There's one catch:
+some of the exercises use functions. At the file description it
+is stated whether functions are used, other files can still be
+used to test your compiler, even when you did not implement
+functions.
+
+To test your compiler and code generation, run the compiler on
+the input files and then compile the c code using gcc. Then test
+the resulting program with some input and output. To make sure
+that your compiled code actually is correct, you can compare
+the results with what you get when you compile the .pas files
+using fpc (Free Pascal Compiler). Since miniPascal is compatible
+with normal Pascal, all programs should compile fine.* **
+
+* One problem is that miniPascal is actually not fully compatible
+with the specification used by fpc (Free Pascal Compiler);
+miniPascal accepts arrays as parameters while fpc does not and
+will give an error. The .pas files in that case cannot be tested
+using fpc.
+
+** Another note: fpc interprets readln as really one line per time.
+So if you input 1 3 2 on one single line, it will only read '1'.
+If you implement readln using a simple scanf, your compiler will
+produce code that interprets 1 3 2 in three separate readln's
+(with 1 argument each).
+
+----------------------------------------------------------------
+
+Short description of each program:
+
+alt.pas:
+Accepts 1 integer as input, if it is negative it doubles it,
+otherwise it prints 0.
+
+calc.pas: (uses functions)
+Basic implementation of the Imperative Programming calculator,
+see comments in the file for usage
+
+count.pas:
+Accepts no input, should print 10
+
+fibonacci.pas: (uses functions)
+Accepts 1 integer as input. Calculates the nth fibonacci number,
+while printing all intermediate steps. Will then print the 39th
+fibonacci twice, once using a dynamic programming solution and
+once using normal recursion. The 39th fib number is 63245986.
+Note: fpc uses 16-bit integers by default so this will overflow.
+
+funcproc.pas: (uses functions)
+Should print 42
+
+gcd.pas: (uses functions)
+Algorithm for computing the GCD of two integers both recursively
+and iteratively. Should print the GCD therefore twice.
+
+longexp.pas:
+Should print 250.416667 (or similar)
+
+missing.pas:
+Input consists of one integer n, and then n unique integers
+0 <= i <= n. The program will then print the missing number
+between 0 and n. For example:
+Input: 3 0 3 1
+Output: 2
+
+permutations.pas: (uses functions, has array as parameter)
+Implementation of a problem of this year's Imperative 
+Programming resit. Example in-/output:
+Input: 5 2 4 0 1 3                      Output: 6
+Input: 10 0 1 2 3 4 5 6 7 8 9           Output: 1
+Input: 10 1 2 3 4 5 6 7 8 9 0           Output: 10
+
+prime.pas: (uses functions)
+Determines whether a given number is prime or not.
+
+puzzle.pas: (uses functions, has array as parameter)
+Implementation of a problem of this year's Imperative
+Programming exam. Input consists of a sequence of integers,
+consider them as 'tiles', ending with a 0. It then checks
+if it is possible to end at the last tile by continuously
+moving n tiles left or right from the current tile, where n
+is the value of the current tile. For example:
+Input: 3 4 1 2 2 1 0                    Output: 1
+You start at index 0 (value 3), go to 3 (value 2), go to 1,
+then to 5 and end at 6.
+
+Input: 3 1 2 3 0                        Output: 0
+Input: 1 2 3 4 5 6 7 0                  Output: 1
+
+pyth.pas:
+Simplified implementation of the pythagoras exercise
+in Imperative Programming. See comments in the file for
+usage details.
+
+sign.pas:
+Should print 25.300000 (or similar)
+
+sumsproducts.pas: (uses functions)
+Given input n, considers the equation
+n = 1 o 2 o 3 o 4 o 5 o 6 o 7 o 8 o 9
+where o can be either + or *. It will then calculate how many
+possible solutions there are for this equation. Examples:
+Input: 45       Output: 2
+Input: 121      Output: 1
+Input: 42       Output: 0
