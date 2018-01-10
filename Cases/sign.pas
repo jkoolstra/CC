@@ -5,9 +5,6 @@ var z : real;
 var as : array [1 .. 3] of real;
 
 begin
-
-  as[2] := as * as;
-  as[2] := as[1] * as[2];
    as[2] := 25.3;
    x := 42;
    y := -1;

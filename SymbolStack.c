@@ -71,4 +71,5 @@ void printSymbolStack(SymbolStack* stack){
   } else {
     printf("\t NONE\n");
   }
+  printf("\n-----------\n");
 }

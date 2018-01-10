@@ -9,10 +9,12 @@
     #include "common.h"
 
     // CHECKING
+	void checkCondition(Type);
+	void checkAssignment(Type, Type);
     void checkIfIdentifierIsDeclared(unsigned);
     void checkIdentifierIdType(unsigned, IdType);
     void checkIdentifierSecondaryType(unsigned, SecondaryType);
-	void checkIfArrayIndexIsInteger(Type t);
+	void checkIfArrayIndexIsInteger(Type);
 	void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types);
 	void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type);
     Type checkTypes(Type, Type, enum yytokentype);
@@ -21,8 +23,8 @@
     void declareParametersLocallyAsVariables(ParameterList);
 
     void declareVariable(StrtabIndexList, Type);
-    void declareFunction(StrtabIndexList, Type, ParameterList*);
-    void declareProcedure(StrtabIndexList, ParameterList*);
+    void declareFunction(StrtabIndexList, Type, ParameterList);
+    void declareProcedure(StrtabIndexList, ParameterList);
 
     int yyerror(char *errmsg);
     void errorMessage(char *msg);
@@ -33,7 +35,7 @@
 
 %union{
     StrtabIndexList indexList;
-    ParameterList *parameterList;
+    ParameterList parameterList;
     Type type;
     TypeList typeList;
 }
@@ -44,7 +46,7 @@
 
 %type <indexList> Identifier_list
 %type <parameterList> Parameter_list Arguments
-%type <type> Standard_type Type Factor Term Expression Simple_expression
+%type <type> Standard_type Type Factor Term Expression Simple_expression Variable
 %type <typeList> Expression_list
 
 %type <indexList> ID INUM RNUM
@@ -76,12 +78,10 @@ Declarations    : Declarations VAR Identifier_list ':' Type ';' {
 
 
 Type            : Standard_type {
-                                    $$ = $1;
-                                    $$.secondary = TYPE_SCALAR;
+                                    $$ = makeType($1.base, TYPE_SCALAR);
                                 }
                 | ARRAY '[' INUM '.''.' INUM ']' OF Standard_type   {
-                                                                        $$ = $9;
-                                                                        $$.secondary = TYPE_ARRAY;
+                                                                        $$ = makeType($9.base, TYPE_ARRAY);
                                                                     }
 
 Standard_type   : INTEGER   {
@@ -106,22 +106,25 @@ Subprogram_head : FUNCTION
                                                             declareFunction($2, $5, $3);
                                                             indent(&stack);
                                                             declareFunctionLocallyAsVariable($2, $5);
-                                                            declareParametersLocallyAsVariables(*$3);
+                                                            declareParametersLocallyAsVariables($3);
+															//printSymbolStack(&stack);
                                                         }
                 | PROCEDURE
                     ID
                     Arguments ';'   {
                                         declareProcedure($2, $3);
                                         indent(&stack);
-                                        declareParametersLocallyAsVariables(*$3);
+                                        declareParametersLocallyAsVariables($3);
+										//printSymbolStack(&stack);
                                     }
 
 Arguments       : '(' Parameter_list ')'    {
+												//printf("%d\n", $2->parameters[0].strtabIndex);
                                                 $$ = $2;
                                             }
                 | /* Empty */               {
-                                                ParameterList *list = safeMalloc(sizeof(ParameterList));
-                                                list->numberOfParameters = 0;
+                                                ParameterList list;
+                                                list.numberOfParameters = 0;
                                                 $$ = list;
                                             }
 
@@ -129,8 +132,9 @@ Parameter_list  : Identifier_list ':' Type  {
                                                 $$ = createParameterList($1, $3);
                                             }
                 | Parameter_list ';' Identifier_list ':' Type   {
-                                                                    appendParameterLists($1, $3, $5);
+                                                                    appendParameterLists(&$1, $3, $5);
 																	$$ = $1;
+
 																}
 
 Compound_statement  : BEG
@@ -143,21 +147,35 @@ Optional_statements : Statement_list
 Statement_list  : Statement
                 | Statement_list ';' Statement
 
-Statement       : Variable ASSIGNOP Expression { }
+Statement       : Variable ASSIGNOP Expression 	{
+	 												checkAssignment($1, $3);
+												}
                 | Procedure_statement
                 | Compound_statement
-                | IF Expression THEN Statement ELSE Statement
-                | WHILE Expression DO Statement
+                | IF Expression THEN Statement ELSE Statement	{
+																	checkCondition($2);
+																}
+                | WHILE Expression DO Statement					{
+																	checkCondition($2);
+																}
 
 Variable        : ID                          {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
                                                   checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
+												  checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
+												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+												  VariableData *data = (VariableData *)entry->data;
+												  $$ = *data->type;
                                               }
                 | ID '[' Expression_list ']'  {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
                                                   checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
                                                   checkIdentifierSecondaryType($1.indices[0], TYPE_ARRAY);
 												  checkIfMultipleArrayIndicesAreAllIntegers($3);
+												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+												  VariableData *data = (VariableData *)entry->data;
+												  $$ = *data->type;
+												  $$.secondary = TYPE_SCALAR;
                                               }
 
 Procedure_statement : ID                        {
@@ -211,7 +229,7 @@ Factor          : ID                            {
                                                     checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = data->type;
+                                                    $$ = *data->type;
 
                                                 }
                 | ID '(' Expression_list ')'    {
@@ -220,7 +238,7 @@ Factor          : ID                            {
 													checkParameterCountAndTypes($1.indices[0], $3, TYPE_FUNCTION);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
-                                                    $$ = data->returnType;
+                                                    $$ = *data->returnType;
                                                 }
                 | INUM                          {
                                                     $$.base = TYPE_INTEGER;
@@ -240,12 +258,28 @@ Factor          : ID                            {
 													checkIfArrayIndexIsInteger($3);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = data->type;
+                                                    $$ = *data->type;
                                                     $$.secondary = TYPE_SCALAR;
                                                 }
 
 %%
 // ----------- CHECKING -----
+
+void checkCondition(Type t1){
+	if(t1.base != TYPE_BOOL){
+		char *err;
+		asprintf(&err, "conditions need to be booleans");
+		errorMessage(err);
+	}
+}
+
+void checkAssignment(Type t1, Type t2){
+	if(t1.base == TYPE_INTEGER && t2.base == TYPE_REAL){
+		char *war;
+        asprintf(&war, "assigning an real to an integer will result in truncation");
+        warningMessage(war);
+	}
+}
 
 void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 	//printSymbolStack(&stack);
@@ -267,13 +301,21 @@ void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 	}
 
 	for(int i = 0; i < params.numberOfParameters; i++){
-		if(params.parameters[i].type.secondary != list.types[i].secondary || params.parameters[i].type.base != list.types[i].base){
+		if(params.parameters[i]->type->secondary != list.types[i]->secondary){
 			char *err;
-			asprintf(&err, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i].strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
-																						baseTypeString(params.parameters[i].type.base), secondaryTypeString(params.parameters[i].type.secondary),
-																						baseTypeString(list.types[i].base), secondaryTypeString(list.types[i].secondary)
+			asprintf(&err, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
+																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
+																						baseTypeString(list.types[i]->base), secondaryTypeString(list.types[i]->secondary)
 																				);
 			errorMessage(err);
+		}
+		if(params.parameters[i]->type->base != list.types[i]->base){
+			char *war;
+			asprintf(&war, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
+																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
+																						baseTypeString(list.types[i]->base), secondaryTypeString(list.types[i]->secondary)
+																				);
+			warningMessage(war);
 		}
 	}
 }
@@ -288,7 +330,7 @@ void checkIfArrayIndexIsInteger(Type type){
 
 void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types){
 	for(int i =0; i < types.numberOfTypes; i++){
-		checkIfArrayIndexIsInteger(types.types[i]);
+		checkIfArrayIndexIsInteger(*types.types[i]);
 	}
 }
 
@@ -311,11 +353,6 @@ Type checkTypes(Type t1, Type t2, enum yytokentype token){
       return makeType(TYPE_INTEGER, TYPE_SCALAR);
     }
     case R_MULOP : {
-      if(t1.base == TYPE_INTEGER || t2.base == TYPE_INTEGER){
-        char *war;
-        asprintf(&war, "real operation on integer");
-        warningMessage(war);
-      }
       return makeType(TYPE_REAL, TYPE_SCALAR);
     }
     case ADDOP : {
@@ -336,9 +373,9 @@ Type checkTypes(Type t1, Type t2, enum yytokentype token){
 void checkIdentifierSecondaryType(unsigned index, SecondaryType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   VariableData *data = (VariableData *)entry->data;
-  if(data->type.secondary != t){
+  if(data->type->secondary != t){
     char *err;
-    asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), secondaryTypeString(data->type.secondary), secondaryTypeString(t));
+    asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), secondaryTypeString(data->type->secondary), secondaryTypeString(t));
     errorMessage(err);
   }
 }
@@ -379,7 +416,9 @@ void declareVariable(StrtabIndexList indentifiers, Type type){
     //printf("declareVariable\n");
     for(int i = indentifiers.numberOfIndices-1 ; i >= 0 ; i--){
         VariableData *data = safeMalloc(sizeof(VariableData *));
-        data->type = type;
+
+		data->type = safeMalloc(sizeof(Type));
+		memcpy(data->type, &type, sizeof(Type));
 
         IdEntry newEntry = makeIdEntry(indentifiers.indices[i]);
         newEntry.data = data;
@@ -389,12 +428,14 @@ void declareVariable(StrtabIndexList indentifiers, Type type){
     }
 }
 
-void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList* parameters){
-    //printf("declareFunction : %d\n", parameters.numberOfParameters);
-    //printf("Declaring function");
+void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList parameters){
     FunctionData *data = safeMalloc(sizeof(FunctionData *));
-    data->returnType = type;
-    data->parameters = parameters;
+
+	data->returnType = safeMalloc(sizeof(Type));
+	memcpy(data->returnType, &type, sizeof(Type));
+
+	data->parameters = safeMalloc(sizeof(ParameterList));
+	memcpy(data->parameters, &parameters, sizeof(ParameterList));
 
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
@@ -402,42 +443,49 @@ void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList* par
     insert(newEntry);
 }
 
-void declareProcedure(StrtabIndexList indentifiers, ParameterList* parameters){
-    //printf("declareProcedure : %d\n", parameters.numberOfParameters);
+void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
     ProcedureData *data = safeMalloc(sizeof(ProcedureData *));
-    data->parameters = parameters;
-	//printf("ParameterList count : %d\n", parameters->numberOfParameters);
-
+	data->parameters = safeMalloc(sizeof(ParameterList));
+	memcpy(data->parameters, &parameters, sizeof(ParameterList));
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
     newEntry.idType = TYPE_PROCEDURE;
-	//printSymbolStack(&stack);
-    insert(newEntry);
+	insert(newEntry);
 }
 
 void declareParametersLocallyAsVariables(ParameterList list){
     //printf("declareParametersLocallyAsVariables : %d\n", list.numberOfParameters);
     for(int i = 0 ; i < list.numberOfParameters ; i++){
+		//printf("base: %s -> secondary : %s \n", baseTypeString(list.parameters[i].type.base), secondaryTypeString(list.parameters[i].type.secondary));
         VariableData *data = safeMalloc(sizeof(VariableData *));
-        data->type = list.parameters[i].type;
 
-        IdEntry newEntry = makeIdEntry(list.parameters[i].strtabIndex);
+		data->type = list.parameters[i]->type;/*safeMalloc(sizeof(Type));
+		memcpy(data->type, &list.parameters[i]->type, sizeof(Type));*/
+
+        IdEntry newEntry = makeIdEntry(list.parameters[i]->strtabIndex);
         newEntry.data = data;
         newEntry.idType = TYPE_VARIABLE;
+		//printEntry(newEntry, *stack.strTab);
         insert(newEntry);
     }
+	//printSymbolStack(&stack);
+	//printSymbolStack(&stack);
 }
 
 void declareFunctionLocallyAsVariable(StrtabIndexList indentifiers, Type type){
-    //printf("declareFunctionLocallyAsVariable\n");
+	//printSymbolStack(&stack);
     VariableData *data = safeMalloc(sizeof(VariableData *));
-    data->type = type;
+	//printf("base: %s -> secondary : %s \n", baseTypeString(type.base), secondaryTypeString(type.secondary));
+	data->type = safeMalloc(sizeof(Type));
+	memcpy(data->type, &type, sizeof(Type));
+	//printf("base: %s -> secondary : %s \n", baseTypeString(data->type.base), secondaryTypeString(data->type.secondary));
 
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
     newEntry.idType = TYPE_VARIABLE;
+	//printEntry(newEntry, *stack.strTab);
     insert(newEntry);
-
+	//printSymbolStack(&stack);
     //printSymbolStack(&stack);
 }
 

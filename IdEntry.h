@@ -31,29 +31,29 @@ typedef struct type {
 
 typedef struct typeList {
 	unsigned numberOfTypes;
-	Type *types;
+	Type **types;
 }	TypeList;
 
 typedef struct variableData {
-	Type type;
+	Type *type;
 } VariableData;
 
 typedef struct parameterData {
 	unsigned strtabIndex;
-	Type type;
+	Type *type;
 } ParameterData;
 
 typedef struct parameterList {
     unsigned numberOfParameters;
-		ParameterData *parameters;
+	ParameterData **parameters;
 } ParameterList;
 
 typedef struct functionData {
-	Type returnType;
+	Type *returnType;
 	ParameterList *parameters;
 } FunctionData;
 
-typedef struct procedureData {
+typedef struct ProcedureData {
 	ParameterList *parameters;
 } ProcedureData;
 
@@ -77,7 +77,7 @@ char *baseTypeString(BaseType type);
 //INITIALIZING
 IdEntry makeIdEntry(unsigned);
 Type makeType(BaseType, SecondaryType);
-ParameterList *createParameterList(StrtabIndexList list, Type t);
+ParameterList createParameterList(StrtabIndexList list, Type t);
 TypeList createTypeList(Type t);
 
 //OPERATIONS
