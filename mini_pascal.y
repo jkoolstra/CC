@@ -1,6 +1,8 @@
 
 %{
+	#include "tokens.h"
     #include "IdEntry.h"
+	#include "AST.h"
     #include <stdio.h>
     #include <stdlib.h>
     #include "lex.yy.c"
@@ -9,15 +11,15 @@
     #include "common.h"
 
     // CHECKING
-	void checkCondition(Type);
-	void checkAssignment(Type, Type);
+	void checkCondition(ASTNode*);
+	void checkAssignment(ASTNode*, ASTNode*);
     void checkIfIdentifierIsDeclared(unsigned);
     void checkIdentifierIdType(unsigned, IdType);
     void checkIdentifierSecondaryType(unsigned, SecondaryType);
-	void checkIfArrayIndexIsInteger(Type);
-	void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types);
-	void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type);
-    Type checkTypes(Type, Type, enum yytokentype);
+	void checkIfArrayIndexIsInteger(ASTNode*);
+	void checkIfMultipleArrayIndicesAreAllIntegers(NodeList);			//TODO: ADD this functionality back
+	void checkParameterCountAndTypes(unsigned id, NodeList list, IdType type);
+    void checkTypes(ASTNode*, ASTNode*, enum yytokentype);
 
 	// DECLARING
     void declareFunctionLocallyAsVariable(StrtabIndexList, Type type);
@@ -35,6 +37,11 @@
 %}
 
 %union{
+	int iValue;
+	float rValue;
+	ASTNode *node;
+	NodeList nodeList;
+
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
@@ -43,19 +50,29 @@
 
 %token PROGRAM FUNCTION PROCEDURE BEG END IF THEN ELSE WHILE DO
 %token VAR ARRAY OF ARRSEP INTEGER REAL
-%token ASSIGNOP RELOP ADDOP I_MULOP R_MULOP INUM RNUM ID
+%token ASSIGNOP
+%token RELOP_GR RELOP_GREQ RELOP_SM RELOP_SMEQ RELOP_NOEQ RELOP_EQ
+%token ADDOP_MIN ADDOP_ADD
+%token I_MULOP_M I_MULOP_D
+%token R_MULOP_M R_MULOP_D
+%token INUM RNUM ID
 
+%type <node> Factor Term Simple_expression Expression Procedure_statement Statement Compound_statement Variable
+%type <nodeList> Expression_list Statement_list Optional_statements
 %type <indexList> Identifier_list
 %type <parameterList> Parameter_list Arguments
-%type <type> Standard_type Type Factor Term Expression Simple_expression Variable
-%type <typeList> Expression_list
+%type <type> Standard_type Type
 
-%type <indexList> ID INUM RNUM
+%type <iValue> INUM
+%type <rValue> RNUM
+%type <indexList> ID
 
 
 %start Program
 
 %%  /****** grammar rules section ********/
+
+/* --------- DECLARATIONS -------------- */
 
 Program : PROGRAM
             ID
@@ -63,7 +80,7 @@ Program : PROGRAM
             Declarations
             Subprogram_declarations
             Compound_statement
-            '.'	
+            '.'
 
 Identifier_list : ID { $$ = $1; }
                 | Identifier_list ',' ID    {
@@ -103,13 +120,9 @@ Subprogram_head : FUNCTION
                     ID
                     Arguments ':' Standard_type ';'     {
                                                             declareFunction($2, $5, $3);
-															//printSymbolStack(&stack);
                                                             indent(&stack);
-															//printSymbolStack(&stack);
                                                             declareFunctionLocallyAsVariable($2, $5);
-															//printSymbolStack(&stack);
                                                             declareParametersLocallyAsVariables($3);
-															//printSymbolStack(&stack);
                                                         }
                 | PROCEDURE
                     ID
@@ -120,7 +133,6 @@ Subprogram_head : FUNCTION
                                     }
 
 Arguments       : '(' Parameter_list ')'    {
-
                                                 $$ = $2;
                                             }
                 | /* Empty */               {
@@ -137,26 +149,41 @@ Parameter_list  : Identifier_list ':' Type  {
 																	$$ = combineParameterLists($1, l);
 																}
 
+/* --------- STATEMENTS -------------- */
+
 Compound_statement  : BEG
                       Optional_statements
-                      END
+                      END							{ $$ = createCompoundStatementNode($2);}
 
-Optional_statements : Statement_list
+Optional_statements : Statement_list				{ $$ = $1;}
                     | /* Empty */
 
-Statement_list  : Statement
-                | Statement_list ';' Statement
+Statement_list  : Statement							{
+														NodeList list = createNodeList($1);
+														$$ = list;
+													}
+                | Statement_list ';' Statement		{
+														NodeList list = combineNodeLists($1, createNodeList($3));
+														$$ = list;
+													}
 
 Statement       : Variable ASSIGNOP Expression 	{
 	 												checkAssignment($1, $3);
+													$$ = createAssignmentNode($1, $3);
 												}
-                | Procedure_statement
-                | Compound_statement
+                | Procedure_statement							{
+																	$$ = $1;
+																}
+                | Compound_statement							{
+																	$$ = $1;
+																}
                 | IF Expression THEN Statement ELSE Statement	{
 																	checkCondition($2);
+																	$$ = createIfElseNode($2, $4, $6);
 																}
                 | WHILE Expression DO Statement					{
 																	checkCondition($2);
+																	$$ = createWhileNode($2, $4);
 																}
 
 Variable        : ID                          {
@@ -165,7 +192,7 @@ Variable        : ID                          {
 												  checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
 												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
-												  $$ = *data->type;
+												  $$ = createVariableNode($1.indices[0], *data->type);
                                               }
                 | ID '[' Expression_list ']'  {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
@@ -174,53 +201,100 @@ Variable        : ID                          {
 												  checkIfMultipleArrayIndicesAreAllIntegers($3);
 												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
-												  $$ = *data->type;
-												  $$.secondary = TYPE_SCALAR;
+												  $$ = createArrayVariableNode($1.indices[0], *data->type, $3);
                                               }
 
 Procedure_statement : ID                        {
 													checkIfIdentifierIsDeclared($1.indices[0]);
 													checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
+													$$ = createProcedureCallNode($1.indices[0], createEmptyNodeList());
 												}
                     | ID '(' Expression_list ')'  	{
 														checkIfIdentifierIsDeclared($1.indices[0]);
 														checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
 														checkParameterCountAndTypes($1.indices[0], $3, TYPE_PROCEDURE);
+														$$ = createProcedureCallNode($1.indices[0], $3);
 													}
 
 Expression_list : Expression						{
-														$$ = createTypeList($1);
+														NodeList list = createNodeList($1);
+														$$ = list;
 													}
                 | Expression_list ',' Expression	{
-														TypeList l = createTypeList($3);
-														$$ = combineTypeLists($1, l);
+														NodeList list = combineNodeLists($1, createNodeList($3));
+														$$ = list;
 													}
 
-Expression      : Simple_expression                           {
-                                                                  $$ = $1;
-                                                              }
-                | Simple_expression RELOP Simple_expression   {
-                                                                  $$ = checkTypes($1, $3, RELOP);
-                                                              }
+Expression      : Simple_expression                           		{
+                                                                  		$$ = $1;
+                                                              		}
+                | Simple_expression RELOP_GR Simple_expression   	{
+																		checkTypes($1, $3, RELOP_GR);
+																		$$ = createExpressionNode($1, $3, RELOP_GR);
+																		//printf("[%d] < type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		}
+                | Simple_expression RELOP_GREQ Simple_expression   	{
+																		checkTypes($1, $3, RELOP_GREQ);
+																		$$ = createExpressionNode($1, $3, RELOP_GREQ);
+																		//printf("[%d] <= type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		}
+                | Simple_expression RELOP_SM Simple_expression   	{
+																		checkTypes($1, $3, RELOP_SM);
+																		$$ = createExpressionNode($1, $3, RELOP_SM);
+																		//printf("[%d] > type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		}
+                | Simple_expression RELOP_SMEQ Simple_expression   	{
+																		checkTypes($1, $3, RELOP_SMEQ);
+																		$$ = createExpressionNode($1, $3, RELOP_SMEQ);
+																		//printf("[%d] >= type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		}
+                | Simple_expression RELOP_NOEQ Simple_expression   	{
+																		checkTypes($1, $3, RELOP_NOEQ);
+																		$$ = createExpressionNode($1, $3, RELOP_NOEQ);
+																		//printf("[%d] <> type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		}
+                | Simple_expression RELOP_EQ Simple_expression   	{
+																		checkTypes($1, $3, RELOP_EQ);
+																		$$ = createExpressionNode($1, $3, RELOP_EQ);
+																		//printf("[%d] = type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		}
 
 Simple_expression   : Term                          {
                                                         $$ = $1;
                                                     }
-                    | ADDOP Term                    {
-                                                        $$ = $2;
+                    | ADDOP_MIN Term                {
+                                                        $$ = $2;		// TODO: Not ignore the addop
                                                     }
-                    | Simple_expression ADDOP Term  {
-                                                        $$ = checkTypes($1, $3, ADDOP);
+                    | ADDOP_ADD Term                {
+                                                        $$ = $2;		// TODO: Not ignore the addop
                                                     }
+                    | Simple_expression ADDOP_MIN Term  {
+                                                        	checkTypes($1, $3, ADDOP_MIN);
+															$$ = createExpressionNode($1, $3, ADDOP_MIN);
+                                                    	}
+                    | Simple_expression ADDOP_ADD Term  {
+                                                        	checkTypes($1, $3, ADDOP_ADD);
+															$$ = createExpressionNode($1, $3, ADDOP_ADD);
+                                                    	}
 
 Term            : Factor                        {
                                                     $$ = $1;
                                                 }
-                | Term R_MULOP Factor             {
-                                                    $$ = checkTypes($1, $3, R_MULOP);
+                | Term R_MULOP_D Factor         {
+													checkTypes($1, $3, R_MULOP_D);
+													$$ = createExpressionNode($1, $3, R_MULOP_D);
                                                 }
-                | Term I_MULOP Factor             {
-                                                    $$ = checkTypes($1, $3, I_MULOP);
+                | Term R_MULOP_M Factor         {
+													checkTypes($1, $3, R_MULOP_M);
+													$$ = createExpressionNode($1, $3, R_MULOP_M);
+                                                }
+                | Term I_MULOP_D Factor         {
+													checkTypes($1, $3, I_MULOP_D);
+													$$ = createExpressionNode($1, $3, I_MULOP_D);
+                                                }
+                | Term I_MULOP_M Factor         {
+													checkTypes($1, $3, I_MULOP_M);
+													$$ = createExpressionNode($1, $3, I_MULOP_M);
                                                 }
 
 Factor          : ID                            {
@@ -228,7 +302,7 @@ Factor          : ID                            {
                                                     checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = *data->type;
+                                                    $$ = createVariableNode($1.indices[0], *data->type);
 
                                                 }
                 | ID '(' Expression_list ')'    {
@@ -237,15 +311,13 @@ Factor          : ID                            {
 													checkParameterCountAndTypes($1.indices[0], $3, TYPE_FUNCTION);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
-                                                    $$ = *data->returnType;
-                                                }
+													$$ = createFunctionCallNode($1.indices[0], *data->returnType, $3);
+												}
                 | INUM                          {
-                                                    $$.base = TYPE_INTEGER;
-                                                    $$.secondary = TYPE_SCALAR;
+													$$ = createIValueNode($1);
                                                 }
                 | RNUM                          {
-                                                    $$.base = TYPE_REAL;
-                                                    $$.secondary = TYPE_SCALAR;
+                                                    $$ = createRValueNode($1);
                                                 }
                 | '(' Expression ')'            {
                                                     $$ = $2;
@@ -257,16 +329,16 @@ Factor          : ID                            {
 													checkIfArrayIndexIsInteger($3);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = *data->type;
-                                                    $$.secondary = TYPE_SCALAR;
+                                                    $$ = createArrayNode($1.indices[0], *data->type, $3);
                                                 }
 
 %%
 // ----------- CHECKING -----
 
 // This function checks if the given type of the condition expression is boolean
-void checkCondition(Type t1){
-	if(t1.base != TYPE_BOOL){
+void checkCondition(ASTNode *node){
+	Type type = determineType(node);
+	if(type.base != TYPE_BOOL){
 		char *err;
 		asprintf(&err, "conditions need to be booleans");
 		errorMessage(err);
@@ -274,8 +346,10 @@ void checkCondition(Type t1){
 }
 
 // This function checks if the two types in an assignment will result in truncation
-void checkAssignment(Type t1, Type t2){
-	if(t1.base == TYPE_INTEGER && t2.base == TYPE_REAL){
+void checkAssignment(ASTNode *left, ASTNode *right){
+	Type typeLeft = determineType(left);
+	Type typeRight = determineType(right);
+	if(typeLeft.base == TYPE_INTEGER && typeRight.base == TYPE_REAL){
 		char *war;
         asprintf(&war, "assigning an real to an integer will result in truncation");
         warningMessage(war);
@@ -286,8 +360,7 @@ void checkAssignment(Type t1, Type t2){
 	1. Is the correct amount of parameters given
 	2. Are the given parameters of the right type
 */
-void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
-	//printSymbolStack(&stack);
+void checkParameterCountAndTypes(unsigned id, NodeList arguments, IdType type){
 	IdEntry *entry = lookupSymbol(&stack, id);
 	ParameterList params;
 	if(entry->idType != type)
@@ -298,26 +371,28 @@ void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 	else
 		params = *((ProcedureData *)entry->data)->parameters;
 
-	if(params.numberOfParameters != list.numberOfTypes){
+	if(params.numberOfParameters != arguments.n){
 		char *err;
-		asprintf(&err, "expected %d parameters but got %d instead", params.numberOfParameters, list.numberOfTypes);
+		asprintf(&err, "expected %d parameters but got %d instead", params.numberOfParameters, arguments.n);
 		errorMessage(err);
 	}
 
 	for(int i = 0; i < params.numberOfParameters; i++){
-		if(params.parameters[i]->type->secondary != list.types[i]->secondary){
+		ASTNode *argument = arguments.nodes[i];
+		Type argumentType = determineType(argument);
+		if(params.parameters[i]->type->secondary != argumentType.secondary){
 			char *err;
 			asprintf(&err, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
 																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
-																						baseTypeString(list.types[i]->base), secondaryTypeString(list.types[i]->secondary)
+																						baseTypeString(argumentType.base), secondaryTypeString(argumentType.secondary)
 																				);
 			errorMessage(err);
 		}
-		if(params.parameters[i]->type->base != list.types[i]->base){
+		if(params.parameters[i]->type->base != argumentType.base){
 			char *war;
 			asprintf(&war, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
 																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
-																						baseTypeString(list.types[i]->base), secondaryTypeString(list.types[i]->secondary)
+																						baseTypeString(argumentType.base), secondaryTypeString(argumentType.secondary)
 																				);
 			warningMessage(war);
 		}
@@ -325,7 +400,8 @@ void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 }
 
 // Checks for one index of an array if it is the right type
-void checkIfArrayIndexIsInteger(Type type){
+void checkIfArrayIndexIsInteger(ASTNode *node){
+	Type type = determineType(node);
 	if(type.base != TYPE_INTEGER){
 		char *err;
 		asprintf(&err, "array index should be an integer");
@@ -334,45 +410,49 @@ void checkIfArrayIndexIsInteger(Type type){
 }
 
 // This method checks if all given indexes of an array are of the right type
-void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types){
-	for(int i =0; i < types.numberOfTypes; i++){
-		checkIfArrayIndexIsInteger(*types.types[i]);
+void checkIfMultipleArrayIndicesAreAllIntegers(NodeList indices){
+	for(int i =0; i < indices.n; i++){
+		ASTNode *node = indices.nodes[i];
+		checkIfArrayIndexIsInteger(node);
 	}
 }
 
-// This method checks if all given indexes of an array are of the right type
-Type checkTypes(Type t1, Type t2, enum yytokentype token){
+void checkTypes(ASTNode *node1, ASTNode *node2, enum yytokentype token){
+	Type t1 = determineType(node1);
+	Type t2 = determineType(node2);
+
   switch(token){
-    case RELOP : {
+	case RELOP_GR :
+  	case RELOP_GREQ :
+  	case RELOP_SM :
+  	case RELOP_SMEQ :
+  	case RELOP_NOEQ :
+  	case RELOP_EQ : {
       if(t1.base != t1.base){
         char *war;
         asprintf(&war, "comparing integers with reals");
         warningMessage(war);
       }
-      return makeType(TYPE_BOOL, TYPE_SCALAR);
+	  return;
     }
-    case I_MULOP : {
+	case I_MULOP_D :
+    case I_MULOP_M : {
       if(t1.base == TYPE_REAL || t2.base == TYPE_REAL){
         char *war;
         asprintf(&war, "integer operation on real");
         warningMessage(war);
       }
-      return makeType(TYPE_INTEGER, TYPE_SCALAR);
+      return;
     }
-    case R_MULOP : {
-      return makeType(TYPE_REAL, TYPE_SCALAR);
-    }
-    case ADDOP : {
-      if(t1.base == t2.base){ // SAME TYPE NO ISSUE
-        return t1;
-      }
-      return makeType(TYPE_REAL, TYPE_SCALAR);
-    }
+	case R_MULOP_D :
+    case R_MULOP_M :
+	case ADDOP_ADD :
+    case ADDOP_MIN : return;
     default: { // SHOULD NEVER OCCUR
       char *err;
       asprintf(&err, "invalid binary token, something went very very very wrong...");
       errorMessage(err);
-	  return makeType(TYPE_REAL, TYPE_SCALAR);	// stops warning;
+	  return;
     }
   }
 }

@@ -55,7 +55,7 @@ begin
 		end
 		else if option <= 2 then
 		begin
-			writeRegister(rid1, readRegister(rid2) + readRegister(rid3))
+			writeRegister(rid1, (readRegister(rid2) + readRegister(rid3)))
 		end
 		else if option <= 3 then
 		begin

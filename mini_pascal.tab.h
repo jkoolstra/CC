@@ -56,13 +56,21 @@
      INTEGER = 272,
      REAL = 273,
      ASSIGNOP = 274,
-     RELOP = 275,
-     ADDOP = 276,
-     I_MULOP = 277,
-     R_MULOP = 278,
-     INUM = 279,
-     RNUM = 280,
-     ID = 281
+     RELOP_GR = 275,
+     RELOP_GREQ = 276,
+     RELOP_SM = 277,
+     RELOP_SMEQ = 278,
+     RELOP_NOEQ = 279,
+     RELOP_EQ = 280,
+     ADDOP_MIN = 281,
+     ADDOP_ADD = 282,
+     I_MULOP_M = 283,
+     I_MULOP_D = 284,
+     R_MULOP_M = 285,
+     R_MULOP_D = 286,
+     INUM = 287,
+     RNUM = 288,
+     ID = 289
    };
 #endif
 /* Tokens.  */
@@ -83,28 +91,41 @@
 #define INTEGER 272
 #define REAL 273
 #define ASSIGNOP 274
-#define RELOP 275
-#define ADDOP 276
-#define I_MULOP 277
-#define R_MULOP 278
-#define INUM 279
-#define RNUM 280
-#define ID 281
+#define RELOP_GR 275
+#define RELOP_GREQ 276
+#define RELOP_SM 277
+#define RELOP_SMEQ 278
+#define RELOP_NOEQ 279
+#define RELOP_EQ 280
+#define ADDOP_MIN 281
+#define ADDOP_ADD 282
+#define I_MULOP_M 283
+#define I_MULOP_D 284
+#define R_MULOP_M 285
+#define R_MULOP_D 286
+#define INUM 287
+#define RNUM 288
+#define ID 289
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 37 "mini_pascal.y"
+#line 39 "mini_pascal.y"
 {
+	int iValue;
+	float rValue;
+	ASTNode *node;
+	NodeList nodeList;
+
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
     TypeList typeList;
 }
 /* Line 1529 of yacc.c.  */
-#line 108 "mini_pascal.tab.h"
+#line 129 "mini_pascal.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

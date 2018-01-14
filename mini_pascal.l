@@ -1,12 +1,17 @@
 
 %{
     #define _PARSER_L
+	#include "tokens.h"
     #include "mini_pascal.tab.h" // YYSTYPE yylval
     #include <stdio.h>
     #include <string.h>
     #include "StringTable.h"
     #include "IdEntry.h"
     #include "common.h"
+
+	#define PRINT 0
+	#define INDENT 0
+	#define LINES 0
 
 int lineno = 1;
 StringTable strTab;
@@ -19,8 +24,8 @@ void makeIdentifier();
 
 %x comment
 
+SIGN 				"+"|"-"
 WHITESPACE          \t|" "
-SIGN                "+"|"-"
 CHARACTER           [a-z]
 DIGIT               [0-9]
 EXPONENT            [eE]{SIGN}?{INTEGER_NUMBER}
@@ -29,46 +34,62 @@ REAL_NUMBER         {INTEGER_NUMBER}("."{INTEGER_NUMBER})?{EXPONENT}?|"."{INTEGE
 
 ID          ("_"|{CHARACTER})("_"|{CHARACTER}|{DIGIT})*
 ASSIGNOP    ":="
-RELOP       "<"|"<="|">"|">="|"<>"|"="
-ADDOP       {SIGN}
-R_MULOP     "*"|"/"
-I_MULOP     "div"|"mod"
+RELOP_GR  	"<"
+RELOP_GREQ	"<="
+RELOP_SM	">"
+RELOP_SMEQ	">="
+RELOP_NOEQ	"<>"
+RELOP_EQ	"="
+ADDOP_ADD   "+"
+ADDOP_MIN	"-"
+R_MULOP_M   "*"
+R_MULOP_D	"/"
+I_MULOP_D   "div"
+I_MULOP_M	"mod"
 
 %%
 
-{WHITESPACE}    /* eat */
+{WHITESPACE}    /* eat */{ if(INDENT){printf("%s", yytext);} }
 
-"{"                 { BEGIN(comment); }
-<comment>"}"        { BEGIN(INITIAL); }
+"{"                 { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} BEGIN(comment); }
+<comment>"}"        { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} BEGIN(INITIAL); }
 <comment>.          /* eat */
 
-<*>\n               { ++lineno; }
+<*>\n               { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} ++lineno; }
 
-do                  { return DO; }
-function            { return FUNCTION; }
-program             { return PROGRAM; }
-procedure           { return PROCEDURE; }
-var                 { return VAR; }
-integer             { return INTEGER; }
-real                { return REAL; }
-array               { return ARRAY; }
-of                  { return OF; }
-if                  { return IF; }
-then                { return THEN; }
-else                { return ELSE; }
-while               { return WHILE; }
-begin               { return BEG; }
-end                 { return END; }
+do                  { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");}  return DO; }
+function            { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return FUNCTION; }
+program             { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return PROGRAM; }
+procedure           { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return PROCEDURE; }
+var                 { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return VAR; }
+integer             { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return INTEGER; }
+real                { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return REAL; }
+array               { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return ARRAY; }
+of                  { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return OF; }
+if                  { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return IF; }
+then                { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return THEN; }
+else                { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return ELSE; }
+while               { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return WHILE; }
+begin               { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return BEG; }
+end                 { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return END; }
 
-{ASSIGNOP}          { return ASSIGNOP; }
-{RELOP}             { return RELOP; }
-{ADDOP}             { return ADDOP; }
-{R_MULOP}           { return R_MULOP; }
-{I_MULOP}           { return I_MULOP; }
-{INTEGER_NUMBER}    { return INUM; }
-{REAL_NUMBER}       { return RNUM; }
-{ID}                { makeIdentifier(); return ID;  }
-.                   { return *yytext; }
+{ASSIGNOP}          { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return ASSIGNOP; }
+{RELOP_GR}          { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RELOP_GR; }
+{RELOP_GREQ}        { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RELOP_GREQ; }
+{RELOP_SM}          { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RELOP_SM; }
+{RELOP_SMEQ}        { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RELOP_SMEQ; }
+{RELOP_NOEQ}        { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RELOP_NOEQ; }
+{RELOP_EQ}          { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RELOP_EQ; }
+{ADDOP_MIN}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return ADDOP_MIN; }
+{ADDOP_ADD}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return ADDOP_ADD; }
+{R_MULOP_D}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return R_MULOP_D; }
+{R_MULOP_M}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return R_MULOP_M; }
+{I_MULOP_D}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return I_MULOP_D; }
+{I_MULOP_M}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return I_MULOP_M; }
+{INTEGER_NUMBER}    { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return INUM; }
+{REAL_NUMBER}       { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RNUM; }
+{ID}                { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");}  makeIdentifier(); return ID;  }
+.                   { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return *yytext; }
 
 %%
 

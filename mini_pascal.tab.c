@@ -83,13 +83,21 @@
      INTEGER = 272,
      REAL = 273,
      ASSIGNOP = 274,
-     RELOP = 275,
-     ADDOP = 276,
-     I_MULOP = 277,
-     R_MULOP = 278,
-     INUM = 279,
-     RNUM = 280,
-     ID = 281
+     RELOP_GR = 275,
+     RELOP_GREQ = 276,
+     RELOP_SM = 277,
+     RELOP_SMEQ = 278,
+     RELOP_NOEQ = 279,
+     RELOP_EQ = 280,
+     ADDOP_MIN = 281,
+     ADDOP_ADD = 282,
+     I_MULOP_M = 283,
+     I_MULOP_D = 284,
+     R_MULOP_M = 285,
+     R_MULOP_D = 286,
+     INUM = 287,
+     RNUM = 288,
+     ID = 289
    };
 #endif
 /* Tokens.  */
@@ -110,13 +118,21 @@
 #define INTEGER 272
 #define REAL 273
 #define ASSIGNOP 274
-#define RELOP 275
-#define ADDOP 276
-#define I_MULOP 277
-#define R_MULOP 278
-#define INUM 279
-#define RNUM 280
-#define ID 281
+#define RELOP_GR 275
+#define RELOP_GREQ 276
+#define RELOP_SM 277
+#define RELOP_SMEQ 278
+#define RELOP_NOEQ 279
+#define RELOP_EQ 280
+#define ADDOP_MIN 281
+#define ADDOP_ADD 282
+#define I_MULOP_M 283
+#define I_MULOP_D 284
+#define R_MULOP_M 285
+#define R_MULOP_D 286
+#define INUM 287
+#define RNUM 288
+#define ID 289
 
 
 
@@ -124,7 +140,9 @@
 /* Copy the first part of user declarations.  */
 #line 2 "mini_pascal.y"
 
+	#include "tokens.h"
     #include "IdEntry.h"
+	#include "AST.h"
     #include <stdio.h>
     #include <stdlib.h>
     #include "lex.yy.c"
@@ -133,15 +151,15 @@
     #include "common.h"
 
     // CHECKING
-	void checkCondition(Type);
-	void checkAssignment(Type, Type);
+	void checkCondition(ASTNode*);
+	void checkAssignment(ASTNode*, ASTNode*);
     void checkIfIdentifierIsDeclared(unsigned);
     void checkIdentifierIdType(unsigned, IdType);
     void checkIdentifierSecondaryType(unsigned, SecondaryType);
-	void checkIfArrayIndexIsInteger(Type);
-	void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types);
-	void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type);
-    Type checkTypes(Type, Type, enum yytokentype);
+	void checkIfArrayIndexIsInteger(ASTNode*);
+	void checkIfMultipleArrayIndicesAreAllIntegers(NodeList);			//TODO: ADD this functionality back
+	void checkParameterCountAndTypes(unsigned id, NodeList list, IdType type);
+    void checkTypes(ASTNode*, ASTNode*, enum yytokentype);
 
 	// DECLARING
     void declareFunctionLocallyAsVariable(StrtabIndexList, Type type);
@@ -178,15 +196,20 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 37 "mini_pascal.y"
+#line 39 "mini_pascal.y"
 {
+	int iValue;
+	float rValue;
+	ASTNode *node;
+	NodeList nodeList;
+
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
     TypeList typeList;
 }
 /* Line 193 of yacc.c.  */
-#line 190 "mini_pascal.tab.c"
+#line 213 "mini_pascal.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -199,7 +222,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 203 "mini_pascal.tab.c"
+#line 226 "mini_pascal.tab.c"
 
 #ifdef short
 # undef short
@@ -414,20 +437,20 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   110
+#define YYLAST   131
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  35
+#define YYNTOKENS  43
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  22
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  49
+#define YYNRULES  58
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  115
+#define YYNSTATES  133
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   281
+#define YYMAXUTOK   289
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -439,12 +462,12 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      27,    28,     2,     2,    31,     2,    30,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    32,    29,
+      35,    36,     2,     2,    39,     2,    38,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    40,    37,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    33,     2,    34,     2,     2,     2,     2,     2,     2,
+       2,    41,     2,    42,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -463,7 +486,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34
 };
 
 #if YYDEBUG
@@ -474,41 +497,47 @@ static const yytype_uint8 yyprhs[] =
        0,     0,     3,    14,    16,    20,    27,    28,    30,    40,
       42,    44,    48,    49,    53,    60,    65,    69,    70,    74,
       80,    84,    86,    87,    89,    93,    97,    99,   101,   108,
-     113,   115,   120,   122,   127,   129,   133,   135,   139,   141,
-     144,   148,   150,   154,   158,   160,   165,   167,   169,   173
+     113,   115,   120,   122,   127,   129,   133,   135,   139,   143,
+     147,   151,   155,   159,   161,   164,   167,   171,   175,   177,
+     181,   185,   189,   193,   195,   200,   202,   204,   208
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      36,     0,    -1,     3,    26,    27,    37,    28,    29,    38,
-      41,    46,    30,    -1,    26,    -1,    37,    31,    26,    -1,
-      38,    13,    37,    32,    39,    29,    -1,    -1,    40,    -1,
-      14,    33,    24,    30,    30,    24,    34,    15,    40,    -1,
-      17,    -1,    18,    -1,    41,    42,    29,    -1,    -1,    43,
-      38,    46,    -1,     4,    26,    44,    32,    40,    29,    -1,
-       5,    26,    44,    29,    -1,    27,    45,    28,    -1,    -1,
-      37,    32,    39,    -1,    45,    29,    37,    32,    39,    -1,
-       6,    47,     7,    -1,    48,    -1,    -1,    49,    -1,    48,
-      29,    49,    -1,    50,    19,    53,    -1,    51,    -1,    46,
-      -1,     8,    53,     9,    49,    10,    49,    -1,    11,    53,
-      12,    49,    -1,    26,    -1,    26,    33,    52,    34,    -1,
-      26,    -1,    26,    27,    52,    28,    -1,    53,    -1,    52,
-      31,    53,    -1,    54,    -1,    54,    20,    54,    -1,    55,
-      -1,    21,    55,    -1,    54,    21,    55,    -1,    56,    -1,
-      55,    23,    56,    -1,    55,    22,    56,    -1,    26,    -1,
-      26,    27,    52,    28,    -1,    24,    -1,    25,    -1,    27,
-      53,    28,    -1,    26,    33,    54,    34,    -1
+      44,     0,    -1,     3,    34,    35,    45,    36,    37,    46,
+      49,    54,    38,    -1,    34,    -1,    45,    39,    34,    -1,
+      46,    13,    45,    40,    47,    37,    -1,    -1,    48,    -1,
+      14,    41,    32,    38,    38,    32,    42,    15,    48,    -1,
+      17,    -1,    18,    -1,    49,    50,    37,    -1,    -1,    51,
+      46,    54,    -1,     4,    34,    52,    40,    48,    37,    -1,
+       5,    34,    52,    37,    -1,    35,    53,    36,    -1,    -1,
+      45,    40,    47,    -1,    53,    37,    45,    40,    47,    -1,
+       6,    55,     7,    -1,    56,    -1,    -1,    57,    -1,    56,
+      37,    57,    -1,    58,    19,    61,    -1,    59,    -1,    54,
+      -1,     8,    61,     9,    57,    10,    57,    -1,    11,    61,
+      12,    57,    -1,    34,    -1,    34,    41,    60,    42,    -1,
+      34,    -1,    34,    35,    60,    36,    -1,    61,    -1,    60,
+      39,    61,    -1,    62,    -1,    62,    20,    62,    -1,    62,
+      21,    62,    -1,    62,    22,    62,    -1,    62,    23,    62,
+      -1,    62,    24,    62,    -1,    62,    25,    62,    -1,    63,
+      -1,    26,    63,    -1,    27,    63,    -1,    62,    26,    63,
+      -1,    62,    27,    63,    -1,    64,    -1,    63,    31,    64,
+      -1,    63,    30,    64,    -1,    63,    29,    64,    -1,    63,
+      28,    64,    -1,    34,    -1,    34,    35,    60,    36,    -1,
+      32,    -1,    33,    -1,    35,    61,    36,    -1,    34,    41,
+      62,    42,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_uint16 yyrline[] =
 {
-       0,    60,    60,    68,    69,    73,    76,    79,    82,    86,
-      89,    93,    94,    96,   102,   114,   122,   126,   132,   135,
-     140,   144,   145,   147,   148,   150,   153,   154,   155,   158,
-     162,   170,   181,   185,   191,   194,   199,   202,   206,   209,
-     212,   216,   219,   222,   226,   234,   242,   246,   250,   253
+       0,    77,    77,    85,    86,    90,    93,    96,    99,   103,
+     106,   110,   111,   113,   119,   127,   135,   138,   144,   147,
+     154,   158,   159,   161,   165,   170,   174,   177,   180,   184,
+     189,   197,   207,   212,   219,   223,   228,   231,   236,   241,
+     246,   251,   256,   262,   265,   268,   271,   275,   280,   283,
+     287,   291,   295,   300,   308,   316,   319,   322,   325
 };
 #endif
 
@@ -519,14 +548,16 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "PROGRAM", "FUNCTION", "PROCEDURE",
   "BEG", "END", "IF", "THEN", "ELSE", "WHILE", "DO", "VAR", "ARRAY", "OF",
-  "ARRSEP", "INTEGER", "REAL", "ASSIGNOP", "RELOP", "ADDOP", "I_MULOP",
-  "R_MULOP", "INUM", "RNUM", "ID", "'('", "')'", "';'", "'.'", "','",
-  "':'", "'['", "']'", "$accept", "Program", "Identifier_list",
-  "Declarations", "Type", "Standard_type", "Subprogram_declarations",
-  "Subprogram_declaration", "Subprogram_head", "Arguments",
-  "Parameter_list", "Compound_statement", "Optional_statements",
-  "Statement_list", "Statement", "Variable", "Procedure_statement",
-  "Expression_list", "Expression", "Simple_expression", "Term", "Factor", 0
+  "ARRSEP", "INTEGER", "REAL", "ASSIGNOP", "RELOP_GR", "RELOP_GREQ",
+  "RELOP_SM", "RELOP_SMEQ", "RELOP_NOEQ", "RELOP_EQ", "ADDOP_MIN",
+  "ADDOP_ADD", "I_MULOP_M", "I_MULOP_D", "R_MULOP_M", "R_MULOP_D", "INUM",
+  "RNUM", "ID", "'('", "')'", "';'", "'.'", "','", "':'", "'['", "']'",
+  "$accept", "Program", "Identifier_list", "Declarations", "Type",
+  "Standard_type", "Subprogram_declarations", "Subprogram_declaration",
+  "Subprogram_head", "Arguments", "Parameter_list", "Compound_statement",
+  "Optional_statements", "Statement_list", "Statement", "Variable",
+  "Procedure_statement", "Expression_list", "Expression",
+  "Simple_expression", "Term", "Factor", 0
 };
 #endif
 
@@ -537,19 +568,21 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,    40,    41,    59,
-      46,    44,    58,    91,    93
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     285,   286,   287,   288,   289,    40,    41,    59,    46,    44,
+      58,    91,    93
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    35,    36,    37,    37,    38,    38,    39,    39,    40,
-      40,    41,    41,    42,    43,    43,    44,    44,    45,    45,
-      46,    47,    47,    48,    48,    49,    49,    49,    49,    49,
-      50,    50,    51,    51,    52,    52,    53,    53,    54,    54,
-      54,    55,    55,    55,    56,    56,    56,    56,    56,    56
+       0,    43,    44,    45,    45,    46,    46,    47,    47,    48,
+      48,    49,    49,    50,    51,    51,    52,    52,    53,    53,
+      54,    55,    55,    56,    56,    57,    57,    57,    57,    57,
+      58,    58,    59,    59,    60,    60,    61,    61,    61,    61,
+      61,    61,    61,    62,    62,    62,    62,    62,    63,    63,
+      63,    63,    63,    64,    64,    64,    64,    64,    64
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
@@ -558,8 +591,9 @@ static const yytype_uint8 yyr2[] =
        0,     2,    10,     1,     3,     6,     0,     1,     9,     1,
        1,     3,     0,     3,     6,     4,     3,     0,     3,     5,
        3,     1,     0,     1,     3,     3,     1,     1,     6,     4,
-       1,     4,     1,     4,     1,     3,     1,     3,     1,     2,
-       3,     1,     3,     3,     1,     4,     1,     1,     3,     4
+       1,     4,     1,     4,     1,     3,     1,     3,     3,     3,
+       3,     3,     3,     1,     2,     2,     3,     3,     1,     3,
+       3,     3,     3,     1,     4,     1,     1,     3,     4
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -571,49 +605,53 @@ static const yytype_uint8 yydefact[] =
        6,     4,    12,     0,     0,     0,     0,     0,    22,     0,
        6,     0,     0,    17,    17,     0,     0,    32,    27,     0,
       21,    23,     0,    26,    11,     0,     2,     0,     9,    10,
-       0,     7,     0,     0,     0,     0,    46,    47,    44,     0,
-       0,    36,    38,    41,     0,     0,     0,    20,     0,     0,
-      13,     0,     5,     0,     0,     0,    15,    39,     0,     0,
+       0,     7,     0,     0,     0,     0,     0,    55,    56,    53,
+       0,     0,    36,    43,    48,     0,     0,     0,    20,     0,
+       0,    13,     0,     5,     0,     0,     0,    15,    44,    45,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,    34,     0,
-      24,    25,     0,     0,    16,     0,     0,     0,     0,    48,
-       0,    37,    40,    43,    42,    29,    33,     0,    31,     0,
-      18,     0,    14,    45,    49,     0,    35,     0,     0,    28,
-       0,    19,     0,     0,     8
+      24,    25,     0,     0,    16,     0,     0,     0,     0,    57,
+       0,    37,    38,    39,    40,    41,    42,    46,    47,    52,
+      51,    50,    49,    29,    33,     0,    31,     0,    18,     0,
+      14,    54,    58,     0,    35,     0,     0,    28,     0,    19,
+       0,     0,     8
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
       -1,     2,     7,    12,    40,    41,    14,    19,    20,    43,
-      64,    28,    29,    30,    31,    32,    33,    77,    78,    51,
-      52,    53
+      65,    28,    29,    30,    31,    32,    33,    87,    88,    52,
+      53,    54
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -76
+#define YYPACT_NINF -90
 static const yytype_int8 yypact[] =
 {
-      23,     2,    37,   -10,   -76,     4,   -76,    17,    15,    32,
-     -76,   -76,    36,     4,    63,    33,    47,    57,     3,    58,
-     -76,    56,    29,    61,    61,    14,    14,   -12,   -76,    82,
-      64,   -76,    71,   -76,   -76,     7,   -76,    59,   -76,   -76,
-      65,   -76,     4,    66,    67,    30,   -76,   -76,     9,    14,
-      86,    40,    48,   -76,    79,    14,    14,   -76,     3,    14,
-     -76,    73,   -76,    44,    49,    62,   -76,    48,    14,    14,
-      72,     3,    14,    30,    30,    30,     3,    22,   -76,   -15,
-     -76,   -76,    69,    29,   -76,     4,    74,    31,    -9,   -76,
-      91,    81,    48,   -76,   -76,   -76,   -76,    14,   -76,    75,
-     -76,    50,   -76,   -76,   -76,     3,   -76,    80,    29,   -76,
-      76,   -76,    92,    62,   -76
+      21,   -18,    34,    31,   -90,    68,   -90,   -19,    66,    70,
+     -90,   -90,    74,    68,    87,     4,    71,    73,     2,    69,
+     -90,    75,    53,    76,    76,    13,    13,    -8,   -90,   101,
+      77,   -90,    90,   -90,   -90,     8,   -90,    78,   -90,   -90,
+      80,   -90,    68,    81,    83,    40,    40,   -90,   -90,   -23,
+      13,   103,    38,    48,   -90,    98,    13,    13,   -90,     2,
+      13,   -90,    84,   -90,    11,    58,    79,   -90,    48,    48,
+      13,    13,    82,     2,    13,    13,    13,    13,    13,    13,
+      40,    40,    40,    40,    40,    40,     2,   -10,   -90,    46,
+     -90,   -90,    85,    53,   -90,    68,    88,    50,    -4,   -90,
+     105,    72,    72,    72,    72,    72,    72,    48,    48,   -90,
+     -90,   -90,   -90,   -90,   -90,    13,   -90,    86,   -90,    61,
+     -90,   -90,   -90,     2,   -90,    94,    53,   -90,    89,   -90,
+     107,    79,   -90
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -76,   -76,   -11,    88,   -75,   -62,   -76,   -76,   -76,    85,
-     -76,    -8,   -76,   -76,   -53,   -76,   -76,   -46,   -25,    -6,
-     -41,    10
+     -90,   -90,   -11,   108,   -89,   -63,   -90,   -90,   -90,   106,
+     -90,    -5,   -90,   -90,   -54,   -90,   -90,   -42,   -25,   -22,
+     -39,    -2
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -621,54 +659,60 @@ static const yytype_int8 yypgoto[] =
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
 #define YYTABLE_NINF -31
-static const yytype_int8 yytable[] =
+static const yytype_int16 yytable[] =
 {
-      50,    54,    15,    86,    67,    80,    21,   -30,   100,    18,
-      79,    25,    73,    18,    26,    55,    97,     5,    90,    98,
-      13,    56,    87,    95,    70,   104,     1,    60,     3,    27,
-       6,    63,    92,   111,    81,    45,    68,     4,    46,    47,
-      48,    49,    69,    37,    10,     8,    38,    39,     9,    13,
-      96,   114,   109,    97,    46,    47,    48,    49,    11,   103,
-      72,    73,    97,    88,     9,    22,    91,    16,    17,    18,
-      74,    75,   106,    23,   101,     9,    83,    84,    85,    38,
-      39,     9,   108,    24,    93,    94,    36,    34,    42,    57,
-      59,    76,    61,    58,    62,    71,    66,    82,    65,    99,
-      89,   105,    73,   102,   110,   107,     0,   113,    35,    44,
-     112
+      51,    55,    15,    96,   118,    90,    68,    69,    18,    21,
+      25,   -30,    70,    26,    18,    89,     3,     8,    71,   100,
+       9,    13,    80,    81,     1,    72,   114,    56,    97,   115,
+      61,    64,   113,    57,     4,    91,    27,   129,   122,    45,
+      46,   107,   108,     9,    22,    47,    48,    49,    50,    98,
+       9,    93,   101,   102,   103,   104,   105,   106,    74,    75,
+      76,    77,    78,    79,    80,    81,     5,    37,   132,   127,
+      38,    39,    47,    48,    49,    50,    82,    83,    84,    85,
+     109,   110,   111,   112,   119,   115,   121,    13,   116,   115,
+     124,    16,    17,    18,    94,    95,    38,    39,    80,    81,
+       9,   126,     6,    10,    11,    23,    34,    24,    58,    60,
+      86,    42,    73,    36,    59,   123,    92,    63,    99,    62,
+      67,    66,   131,   117,   125,   120,   128,     0,    35,     0,
+      44,   130
 };
 
-static const yytype_int8 yycheck[] =
+static const yytype_int16 yycheck[] =
 {
-      25,    26,    13,    65,    45,    58,    14,    19,    83,     6,
-      56,     8,    21,     6,    11,    27,    31,    27,    71,    34,
-      13,    33,    68,    76,    49,    34,     3,    35,    26,    26,
-      26,    42,    73,   108,    59,    21,    27,     0,    24,    25,
-      26,    27,    33,    14,    29,    28,    17,    18,    31,    13,
-      28,   113,   105,    31,    24,    25,    26,    27,    26,    28,
-      20,    21,    31,    69,    31,    32,    72,     4,     5,     6,
-      22,    23,    97,    26,    85,    31,    32,    28,    29,    17,
-      18,    31,    32,    26,    74,    75,    30,    29,    27,     7,
-      19,    12,    33,    29,    29,     9,    29,    24,    32,    30,
-      28,    10,    21,    29,    24,    30,    -1,    15,    20,    24,
-      34
+      25,    26,    13,    66,    93,    59,    45,    46,     6,    14,
+       8,    19,    35,    11,     6,    57,    34,    36,    41,    73,
+      39,    13,    26,    27,     3,    50,    36,    35,    70,    39,
+      35,    42,    86,    41,     0,    60,    34,   126,    42,    26,
+      27,    80,    81,    39,    40,    32,    33,    34,    35,    71,
+      39,    40,    74,    75,    76,    77,    78,    79,    20,    21,
+      22,    23,    24,    25,    26,    27,    35,    14,   131,   123,
+      17,    18,    32,    33,    34,    35,    28,    29,    30,    31,
+      82,    83,    84,    85,    95,    39,    36,    13,    42,    39,
+     115,     4,     5,     6,    36,    37,    17,    18,    26,    27,
+      39,    40,    34,    37,    34,    34,    37,    34,     7,    19,
+      12,    35,     9,    38,    37,    10,    32,    37,    36,    41,
+      37,    40,    15,    38,    38,    37,    32,    -1,    20,    -1,
+      24,    42
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     3,    36,    26,     0,    27,    26,    37,    28,    31,
-      29,    26,    38,    13,    41,    37,     4,     5,     6,    42,
-      43,    46,    32,    26,    26,     8,    11,    26,    46,    47,
-      48,    49,    50,    51,    29,    38,    30,    14,    17,    18,
-      39,    40,    27,    44,    44,    21,    24,    25,    26,    27,
-      53,    54,    55,    56,    53,    27,    33,     7,    29,    19,
-      46,    33,    29,    37,    45,    32,    29,    55,    27,    33,
-      53,     9,    20,    21,    22,    23,    12,    52,    53,    52,
-      49,    53,    24,    32,    28,    29,    40,    52,    54,    28,
-      49,    54,    55,    56,    56,    49,    28,    31,    34,    30,
-      39,    37,    29,    28,    34,    10,    53,    30,    32,    49,
-      24,    39,    34,    15,    40
+       0,     3,    44,    34,     0,    35,    34,    45,    36,    39,
+      37,    34,    46,    13,    49,    45,     4,     5,     6,    50,
+      51,    54,    40,    34,    34,     8,    11,    34,    54,    55,
+      56,    57,    58,    59,    37,    46,    38,    14,    17,    18,
+      47,    48,    35,    52,    52,    26,    27,    32,    33,    34,
+      35,    61,    62,    63,    64,    61,    35,    41,     7,    37,
+      19,    54,    41,    37,    45,    53,    40,    37,    63,    63,
+      35,    41,    61,     9,    20,    21,    22,    23,    24,    25,
+      26,    27,    28,    29,    30,    31,    12,    60,    61,    60,
+      57,    61,    32,    40,    36,    37,    48,    60,    62,    36,
+      57,    62,    62,    62,    62,    62,    62,    63,    63,    64,
+      64,    64,    64,    57,    36,    39,    42,    38,    47,    45,
+      37,    36,    42,    10,    61,    38,    40,    57,    32,    47,
+      42,    15,    48
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1483,75 +1527,71 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 68 "mini_pascal.y"
+#line 85 "mini_pascal.y"
     { (yyval.indexList) = (yyvsp[(1) - (1)].indexList); ;}
     break;
 
   case 4:
-#line 69 "mini_pascal.y"
+#line 86 "mini_pascal.y"
     {
                                                 (yyval.indexList) = combineIdentifiers((yyvsp[(1) - (3)].indexList), (yyvsp[(3) - (3)].indexList));
                                             ;}
     break;
 
   case 5:
-#line 73 "mini_pascal.y"
+#line 90 "mini_pascal.y"
     {
                                                                     declareVariable((yyvsp[(3) - (6)].indexList), (yyvsp[(5) - (6)].type));
                                                                 ;}
     break;
 
   case 7:
-#line 79 "mini_pascal.y"
+#line 96 "mini_pascal.y"
     {
                                     (yyval.type) = makeType((yyvsp[(1) - (1)].type).base, TYPE_SCALAR);
                                 ;}
     break;
 
   case 8:
-#line 82 "mini_pascal.y"
+#line 99 "mini_pascal.y"
     {
                                                                         (yyval.type) = makeType((yyvsp[(9) - (9)].type).base, TYPE_ARRAY);
                                                                     ;}
     break;
 
   case 9:
-#line 86 "mini_pascal.y"
+#line 103 "mini_pascal.y"
     {
                                 (yyval.type).base = TYPE_INTEGER ;
                             ;}
     break;
 
   case 10:
-#line 89 "mini_pascal.y"
+#line 106 "mini_pascal.y"
     {
                                 (yyval.type).base = TYPE_REAL ;
                             ;}
     break;
 
   case 13:
-#line 98 "mini_pascal.y"
+#line 115 "mini_pascal.y"
     {
                                                     outdent(&stack);
                                                 ;}
     break;
 
   case 14:
-#line 104 "mini_pascal.y"
+#line 121 "mini_pascal.y"
     {
                                                             declareFunction((yyvsp[(2) - (6)].indexList), (yyvsp[(5) - (6)].type), (yyvsp[(3) - (6)].parameterList));
-															//printSymbolStack(&stack);
                                                             indent(&stack);
-															//printSymbolStack(&stack);
                                                             declareFunctionLocallyAsVariable((yyvsp[(2) - (6)].indexList), (yyvsp[(5) - (6)].type));
-															//printSymbolStack(&stack);
                                                             declareParametersLocallyAsVariables((yyvsp[(3) - (6)].parameterList));
-															//printSymbolStack(&stack);
                                                         ;}
     break;
 
   case 15:
-#line 116 "mini_pascal.y"
+#line 129 "mini_pascal.y"
     {
                                         declareProcedure((yyvsp[(2) - (4)].indexList), (yyvsp[(3) - (4)].parameterList));
                                         indent(&stack);
@@ -1560,15 +1600,14 @@ yyreduce:
     break;
 
   case 16:
-#line 122 "mini_pascal.y"
+#line 135 "mini_pascal.y"
     {
-
                                                 (yyval.parameterList) = (yyvsp[(2) - (3)].parameterList);
                                             ;}
     break;
 
   case 17:
-#line 126 "mini_pascal.y"
+#line 138 "mini_pascal.y"
     {
                                                 ParameterList list;
                                                 list.numberOfParameters = 0;
@@ -1577,219 +1616,342 @@ yyreduce:
     break;
 
   case 18:
-#line 132 "mini_pascal.y"
+#line 144 "mini_pascal.y"
     {
                                                 (yyval.parameterList) = createParameterList((yyvsp[(1) - (3)].indexList), (yyvsp[(3) - (3)].type));
                                             ;}
     break;
 
   case 19:
-#line 135 "mini_pascal.y"
+#line 147 "mini_pascal.y"
     {
 																	ParameterList l = createParameterList((yyvsp[(3) - (5)].indexList), (yyvsp[(5) - (5)].type));
 																	(yyval.parameterList) = combineParameterLists((yyvsp[(1) - (5)].parameterList), l);
 																;}
     break;
 
-  case 25:
-#line 150 "mini_pascal.y"
+  case 20:
+#line 156 "mini_pascal.y"
+    { (yyval.node) = createCompoundStatementNode((yyvsp[(2) - (3)].nodeList));;}
+    break;
+
+  case 21:
+#line 158 "mini_pascal.y"
+    { (yyval.nodeList) = (yyvsp[(1) - (1)].nodeList);;}
+    break;
+
+  case 23:
+#line 161 "mini_pascal.y"
     {
-	 												checkAssignment((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type));
+														NodeList list = createNodeList((yyvsp[(1) - (1)].node));
+														(yyval.nodeList) = list;
+													;}
+    break;
+
+  case 24:
+#line 165 "mini_pascal.y"
+    {
+														NodeList list = combineNodeLists((yyvsp[(1) - (3)].nodeList), createNodeList((yyvsp[(3) - (3)].node)));
+														(yyval.nodeList) = list;
+													;}
+    break;
+
+  case 25:
+#line 170 "mini_pascal.y"
+    {
+	 												checkAssignment((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node));
+													(yyval.node) = createAssignmentNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node));
 												;}
     break;
 
-  case 28:
-#line 155 "mini_pascal.y"
+  case 26:
+#line 174 "mini_pascal.y"
     {
-																	checkCondition((yyvsp[(2) - (6)].type));
+																	(yyval.node) = (yyvsp[(1) - (1)].node);
+																;}
+    break;
+
+  case 27:
+#line 177 "mini_pascal.y"
+    {
+																	(yyval.node) = (yyvsp[(1) - (1)].node);
+																;}
+    break;
+
+  case 28:
+#line 180 "mini_pascal.y"
+    {
+																	checkCondition((yyvsp[(2) - (6)].node));
+																	(yyval.node) = createIfElseNode((yyvsp[(2) - (6)].node), (yyvsp[(4) - (6)].node), (yyvsp[(6) - (6)].node));
 																;}
     break;
 
   case 29:
-#line 158 "mini_pascal.y"
+#line 184 "mini_pascal.y"
     {
-																	checkCondition((yyvsp[(2) - (4)].type));
+																	checkCondition((yyvsp[(2) - (4)].node));
+																	(yyval.node) = createWhileNode((yyvsp[(2) - (4)].node), (yyvsp[(4) - (4)].node));
 																;}
     break;
 
   case 30:
-#line 162 "mini_pascal.y"
+#line 189 "mini_pascal.y"
     {
                                                   checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
                                                   checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
 												  checkIdentifierSecondaryType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_SCALAR);
 												  IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (1)].indexList).indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
-												  (yyval.type) = *data->type;
+												  (yyval.node) = createVariableNode((yyvsp[(1) - (1)].indexList).indices[0], *data->type);
                                               ;}
     break;
 
   case 31:
-#line 170 "mini_pascal.y"
+#line 197 "mini_pascal.y"
     {
                                                   checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
                                                   checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
                                                   checkIdentifierSecondaryType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_ARRAY);
-												  checkIfMultipleArrayIndicesAreAllIntegers((yyvsp[(3) - (4)].typeList));
+												  checkIfMultipleArrayIndicesAreAllIntegers((yyvsp[(3) - (4)].nodeList));
 												  IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (4)].indexList).indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
-												  (yyval.type) = *data->type;
-												  (yyval.type).secondary = TYPE_SCALAR;
+												  (yyval.node) = createArrayVariableNode((yyvsp[(1) - (4)].indexList).indices[0], *data->type, (yyvsp[(3) - (4)].nodeList));
                                               ;}
     break;
 
   case 32:
-#line 181 "mini_pascal.y"
+#line 207 "mini_pascal.y"
     {
 													checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
 													checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_PROCEDURE);
+													(yyval.node) = createProcedureCallNode((yyvsp[(1) - (1)].indexList).indices[0], createEmptyNodeList());
 												;}
     break;
 
   case 33:
-#line 185 "mini_pascal.y"
+#line 212 "mini_pascal.y"
     {
 														checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
 														checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_PROCEDURE);
-														checkParameterCountAndTypes((yyvsp[(1) - (4)].indexList).indices[0], (yyvsp[(3) - (4)].typeList), TYPE_PROCEDURE);
+														checkParameterCountAndTypes((yyvsp[(1) - (4)].indexList).indices[0], (yyvsp[(3) - (4)].nodeList), TYPE_PROCEDURE);
+														(yyval.node) = createProcedureCallNode((yyvsp[(1) - (4)].indexList).indices[0], (yyvsp[(3) - (4)].nodeList));
 													;}
     break;
 
   case 34:
-#line 191 "mini_pascal.y"
+#line 219 "mini_pascal.y"
     {
-														(yyval.typeList) = createTypeList((yyvsp[(1) - (1)].type));
+														NodeList list = createNodeList((yyvsp[(1) - (1)].node));
+														(yyval.nodeList) = list;
 													;}
     break;
 
   case 35:
-#line 194 "mini_pascal.y"
+#line 223 "mini_pascal.y"
     {
-														TypeList l = createTypeList((yyvsp[(3) - (3)].type));
-														(yyval.typeList) = combineTypeLists((yyvsp[(1) - (3)].typeList), l);
+														NodeList list = combineNodeLists((yyvsp[(1) - (3)].nodeList), createNodeList((yyvsp[(3) - (3)].node)));
+														(yyval.nodeList) = list;
 													;}
     break;
 
   case 36:
-#line 199 "mini_pascal.y"
+#line 228 "mini_pascal.y"
     {
-                                                                  (yyval.type) = (yyvsp[(1) - (1)].type);
-                                                              ;}
+                                                                  		(yyval.node) = (yyvsp[(1) - (1)].node);
+                                                              		;}
     break;
 
   case 37:
-#line 202 "mini_pascal.y"
+#line 231 "mini_pascal.y"
     {
-                                                                  (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), RELOP);
-                                                              ;}
+																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_GR);
+																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_GR);
+																		//printf("[%d] < type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		;}
     break;
 
   case 38:
-#line 206 "mini_pascal.y"
+#line 236 "mini_pascal.y"
     {
-                                                        (yyval.type) = (yyvsp[(1) - (1)].type);
-                                                    ;}
+																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_GREQ);
+																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_GREQ);
+																		//printf("[%d] <= type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		;}
     break;
 
   case 39:
-#line 209 "mini_pascal.y"
+#line 241 "mini_pascal.y"
     {
-                                                        (yyval.type) = (yyvsp[(2) - (2)].type);
-                                                    ;}
+																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_SM);
+																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_SM);
+																		//printf("[%d] > type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		;}
     break;
 
   case 40:
-#line 212 "mini_pascal.y"
+#line 246 "mini_pascal.y"
     {
-                                                        (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), ADDOP);
-                                                    ;}
+																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_SMEQ);
+																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_SMEQ);
+																		//printf("[%d] >= type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		;}
     break;
 
   case 41:
-#line 216 "mini_pascal.y"
+#line 251 "mini_pascal.y"
     {
-                                                    (yyval.type) = (yyvsp[(1) - (1)].type);
-                                                ;}
+																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_NOEQ);
+																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_NOEQ);
+																		//printf("[%d] <> type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		;}
     break;
 
   case 42:
-#line 219 "mini_pascal.y"
+#line 256 "mini_pascal.y"
     {
-                                                    (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), R_MULOP);
-                                                ;}
+																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_EQ);
+																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), RELOP_EQ);
+																		//printf("[%d] = type : %s\n", lineno, baseTypeString(determineType($$).base));
+                                                              		;}
     break;
 
   case 43:
-#line 222 "mini_pascal.y"
+#line 262 "mini_pascal.y"
     {
-                                                    (yyval.type) = checkTypes((yyvsp[(1) - (3)].type), (yyvsp[(3) - (3)].type), I_MULOP);
-                                                ;}
+                                                        (yyval.node) = (yyvsp[(1) - (1)].node);
+                                                    ;}
     break;
 
   case 44:
-#line 226 "mini_pascal.y"
+#line 265 "mini_pascal.y"
+    {
+                                                        (yyval.node) = (yyvsp[(2) - (2)].node);		// TODO: Not ignore the addop
+                                                    ;}
+    break;
+
+  case 45:
+#line 268 "mini_pascal.y"
+    {
+                                                        (yyval.node) = (yyvsp[(2) - (2)].node);		// TODO: Not ignore the addop
+                                                    ;}
+    break;
+
+  case 46:
+#line 271 "mini_pascal.y"
+    {
+                                                        	checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), ADDOP_MIN);
+															(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), ADDOP_MIN);
+                                                    	;}
+    break;
+
+  case 47:
+#line 275 "mini_pascal.y"
+    {
+                                                        	checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), ADDOP_ADD);
+															(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), ADDOP_ADD);
+                                                    	;}
+    break;
+
+  case 48:
+#line 280 "mini_pascal.y"
+    {
+                                                    (yyval.node) = (yyvsp[(1) - (1)].node);
+                                                ;}
+    break;
+
+  case 49:
+#line 283 "mini_pascal.y"
+    {
+													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), R_MULOP_D);
+													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), R_MULOP_D);
+                                                ;}
+    break;
+
+  case 50:
+#line 287 "mini_pascal.y"
+    {
+													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), R_MULOP_M);
+													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), R_MULOP_M);
+                                                ;}
+    break;
+
+  case 51:
+#line 291 "mini_pascal.y"
+    {
+													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), I_MULOP_D);
+													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), I_MULOP_D);
+                                                ;}
+    break;
+
+  case 52:
+#line 295 "mini_pascal.y"
+    {
+													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), I_MULOP_M);
+													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), I_MULOP_M);
+                                                ;}
+    break;
+
+  case 53:
+#line 300 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
                                                     checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
                                                     IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (1)].indexList).indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    (yyval.type) = *data->type;
+                                                    (yyval.node) = createVariableNode((yyvsp[(1) - (1)].indexList).indices[0], *data->type);
 
                                                 ;}
     break;
 
-  case 45:
-#line 234 "mini_pascal.y"
+  case 54:
+#line 308 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
                                                     checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_FUNCTION);
-													checkParameterCountAndTypes((yyvsp[(1) - (4)].indexList).indices[0], (yyvsp[(3) - (4)].typeList), TYPE_FUNCTION);
+													checkParameterCountAndTypes((yyvsp[(1) - (4)].indexList).indices[0], (yyvsp[(3) - (4)].nodeList), TYPE_FUNCTION);
                                                     IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (4)].indexList).indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
-                                                    (yyval.type) = *data->returnType;
-                                                ;}
+													(yyval.node) = createFunctionCallNode((yyvsp[(1) - (4)].indexList).indices[0], *data->returnType, (yyvsp[(3) - (4)].nodeList));
+												;}
     break;
 
-  case 46:
-#line 242 "mini_pascal.y"
+  case 55:
+#line 316 "mini_pascal.y"
     {
-                                                    (yyval.type).base = TYPE_INTEGER;
-                                                    (yyval.type).secondary = TYPE_SCALAR;
+													(yyval.node) = createIValueNode((yyvsp[(1) - (1)].iValue));
                                                 ;}
     break;
 
-  case 47:
-#line 246 "mini_pascal.y"
+  case 56:
+#line 319 "mini_pascal.y"
     {
-                                                    (yyval.type).base = TYPE_REAL;
-                                                    (yyval.type).secondary = TYPE_SCALAR;
+                                                    (yyval.node) = createRValueNode((yyvsp[(1) - (1)].rValue));
                                                 ;}
     break;
 
-  case 48:
-#line 250 "mini_pascal.y"
+  case 57:
+#line 322 "mini_pascal.y"
     {
-                                                    (yyval.type) = (yyvsp[(2) - (3)].type);
+                                                    (yyval.node) = (yyvsp[(2) - (3)].node);
                                                 ;}
     break;
 
-  case 49:
-#line 253 "mini_pascal.y"
+  case 58:
+#line 325 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
                                                     checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
                                                     checkIdentifierSecondaryType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_ARRAY);
-													checkIfArrayIndexIsInteger((yyvsp[(3) - (4)].type));
+													checkIfArrayIndexIsInteger((yyvsp[(3) - (4)].node));
                                                     IdEntry *entry = lookupSymbol(&stack,(yyvsp[(1) - (4)].indexList).indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    (yyval.type) = *data->type;
-                                                    (yyval.type).secondary = TYPE_SCALAR;
+                                                    (yyval.node) = createArrayNode((yyvsp[(1) - (4)].indexList).indices[0], *data->type, (yyvsp[(3) - (4)].node));
                                                 ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1793 "mini_pascal.tab.c"
+#line 1955 "mini_pascal.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2003,13 +2165,14 @@ yyreturn:
 }
 
 
-#line 264 "mini_pascal.y"
+#line 335 "mini_pascal.y"
 
 // ----------- CHECKING -----
 
 // This function checks if the given type of the condition expression is boolean
-void checkCondition(Type t1){
-	if(t1.base != TYPE_BOOL){
+void checkCondition(ASTNode *node){
+	Type type = determineType(node);
+	if(type.base != TYPE_BOOL){
 		char *err;
 		asprintf(&err, "conditions need to be booleans");
 		errorMessage(err);
@@ -2017,8 +2180,10 @@ void checkCondition(Type t1){
 }
 
 // This function checks if the two types in an assignment will result in truncation
-void checkAssignment(Type t1, Type t2){
-	if(t1.base == TYPE_INTEGER && t2.base == TYPE_REAL){
+void checkAssignment(ASTNode *left, ASTNode *right){
+	Type typeLeft = determineType(left);
+	Type typeRight = determineType(right);
+	if(typeLeft.base == TYPE_INTEGER && typeRight.base == TYPE_REAL){
 		char *war;
         asprintf(&war, "assigning an real to an integer will result in truncation");
         warningMessage(war);
@@ -2029,8 +2194,7 @@ void checkAssignment(Type t1, Type t2){
 	1. Is the correct amount of parameters given
 	2. Are the given parameters of the right type
 */
-void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
-	//printSymbolStack(&stack);
+void checkParameterCountAndTypes(unsigned id, NodeList arguments, IdType type){
 	IdEntry *entry = lookupSymbol(&stack, id);
 	ParameterList params;
 	if(entry->idType != type)
@@ -2041,26 +2205,28 @@ void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 	else
 		params = *((ProcedureData *)entry->data)->parameters;
 
-	if(params.numberOfParameters != list.numberOfTypes){
+	if(params.numberOfParameters != arguments.n){
 		char *err;
-		asprintf(&err, "expected %d parameters but got %d instead", params.numberOfParameters, list.numberOfTypes);
+		asprintf(&err, "expected %d parameters but got %d instead", params.numberOfParameters, arguments.n);
 		errorMessage(err);
 	}
 
 	for(int i = 0; i < params.numberOfParameters; i++){
-		if(params.parameters[i]->type->secondary != list.types[i]->secondary){
+		ASTNode *argument = arguments.nodes[i];
+		Type argumentType = determineType(argument);
+		if(params.parameters[i]->type->secondary != argumentType.secondary){
 			char *err;
 			asprintf(&err, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
 																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
-																						baseTypeString(list.types[i]->base), secondaryTypeString(list.types[i]->secondary)
+																						baseTypeString(argumentType.base), secondaryTypeString(argumentType.secondary)
 																				);
 			errorMessage(err);
 		}
-		if(params.parameters[i]->type->base != list.types[i]->base){
+		if(params.parameters[i]->type->base != argumentType.base){
 			char *war;
 			asprintf(&war, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
 																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
-																						baseTypeString(list.types[i]->base), secondaryTypeString(list.types[i]->secondary)
+																						baseTypeString(argumentType.base), secondaryTypeString(argumentType.secondary)
 																				);
 			warningMessage(war);
 		}
@@ -2068,7 +2234,8 @@ void checkParameterCountAndTypes(unsigned id, TypeList list, IdType type){
 }
 
 // Checks for one index of an array if it is the right type
-void checkIfArrayIndexIsInteger(Type type){
+void checkIfArrayIndexIsInteger(ASTNode *node){
+	Type type = determineType(node);
 	if(type.base != TYPE_INTEGER){
 		char *err;
 		asprintf(&err, "array index should be an integer");
@@ -2077,45 +2244,49 @@ void checkIfArrayIndexIsInteger(Type type){
 }
 
 // This method checks if all given indexes of an array are of the right type
-void checkIfMultipleArrayIndicesAreAllIntegers(TypeList types){
-	for(int i =0; i < types.numberOfTypes; i++){
-		checkIfArrayIndexIsInteger(*types.types[i]);
+void checkIfMultipleArrayIndicesAreAllIntegers(NodeList indices){
+	for(int i =0; i < indices.n; i++){
+		ASTNode *node = indices.nodes[i];
+		checkIfArrayIndexIsInteger(node);
 	}
 }
 
-// This method checks if all given indexes of an array are of the right type
-Type checkTypes(Type t1, Type t2, enum yytokentype token){
+void checkTypes(ASTNode *node1, ASTNode *node2, enum yytokentype token){
+	Type t1 = determineType(node1);
+	Type t2 = determineType(node2);
+
   switch(token){
-    case RELOP : {
+	case RELOP_GR :
+  	case RELOP_GREQ :
+  	case RELOP_SM :
+  	case RELOP_SMEQ :
+  	case RELOP_NOEQ :
+  	case RELOP_EQ : {
       if(t1.base != t1.base){
         char *war;
         asprintf(&war, "comparing integers with reals");
         warningMessage(war);
       }
-      return makeType(TYPE_BOOL, TYPE_SCALAR);
+	  return;
     }
-    case I_MULOP : {
+	case I_MULOP_D :
+    case I_MULOP_M : {
       if(t1.base == TYPE_REAL || t2.base == TYPE_REAL){
         char *war;
         asprintf(&war, "integer operation on real");
         warningMessage(war);
       }
-      return makeType(TYPE_INTEGER, TYPE_SCALAR);
+      return;
     }
-    case R_MULOP : {
-      return makeType(TYPE_REAL, TYPE_SCALAR);
-    }
-    case ADDOP : {
-      if(t1.base == t2.base){ // SAME TYPE NO ISSUE
-        return t1;
-      }
-      return makeType(TYPE_REAL, TYPE_SCALAR);
-    }
+	case R_MULOP_D :
+    case R_MULOP_M :
+	case ADDOP_ADD :
+    case ADDOP_MIN : return;
     default: { // SHOULD NEVER OCCUR
       char *err;
       asprintf(&err, "invalid binary token, something went very very very wrong...");
       errorMessage(err);
-	  return makeType(TYPE_REAL, TYPE_SCALAR);	// stops warning;
+	  return;
     }
   }
 }

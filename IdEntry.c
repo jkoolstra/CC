@@ -1,6 +1,3 @@
-/* symtab.c: very simple symbol table.
- * author: Arnold Meijster (a.meijster@rug.nl)
- */
 
 #include <stdio.h>
 #include <stdlib.h>
