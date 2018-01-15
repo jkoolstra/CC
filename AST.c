@@ -29,7 +29,7 @@ ASTNode *createDeclarationNode(unsigned name, Type type){
 	data->name = name;
 	data->type = type;
 
-	ASTNode *node = createEmptyNode(NODE_IVALUE);
+	ASTNode *node = createEmptyNode(NODE_DECLARATION);
 	node->data = data;
 
 	return node;
