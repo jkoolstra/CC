@@ -1,7 +1,6 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-
 // From parser.tab.h
 // We need this because we cannot yet define YYSTYPE
 #ifndef YYTOKENTYPE

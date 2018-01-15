@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-O2 -Wall -Wunused-function
-all: scanner parser SymbolTable.o SymbolStack.o StringTable.o IdEntry.o common.o AST.o
-	${CC} ${CFLAGS} mini_pascal.tab.c StringTable.o SymbolTable.o SymbolStack.o IdEntry.o common.o AST.o -ll -lm
+all: scanner parser SymbolTable.o SymbolStack.o StringTable.o IdEntry.o common.o AST.o IRGenerator.o
+	${CC} ${CFLAGS} mini_pascal.tab.c StringTable.o SymbolTable.o SymbolStack.o IdEntry.o common.o AST.o IRGenerator.o -ll -lm
 
 scanner: mini_pascal.l
 	flex -i mini_pascal.l
@@ -50,4 +50,14 @@ cs:
 	./a.out < Cases/longexp.pas
 	./a.out < Cases/permutations.pas
 	./a.out < Cases/puzzle.pas
+	./a.out < Cases/sign.pas
+
+line:
+	./a.out < Cases/missing.pas
+	./a.out < Cases/prime.pas
+	./a.out < Cases/pyth.pas
+	./a.out < Cases/alt.pas
+	./a.out < Cases/count.pas
+	./a.out < Cases/count2.pas
+	./a.out < Cases/longexp.pas
 	./a.out < Cases/sign.pas

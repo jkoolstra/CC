@@ -3,10 +3,10 @@
 
 #include "StringTable.h"
 #include "common.h"
-#include "tokens.h"
 #include "IdEntry.h"
 
 typedef enum nodeType {
+	NODE_DECLARATION,
 	NODE_IVALUE,
 	NODE_RVALUE,
 	NODE_VARIABLE,
@@ -19,8 +19,25 @@ typedef enum nodeType {
 	NODE_ASSIGNMENT,
 	NODE_IF_ELSE,
 	NODE_WHILE,
+	NODE_FUNCTION,
+	NODE_PROCEDURE,
 	NODE_PROGRAM
 } NodeType;
+
+typedef enum operator {
+	OP_RELOP_GR = 275,
+	OP_RELOP_GREQ = 276,
+	OP_RELOP_SM = 277,
+	OP_RELOP_SMEQ = 278,
+	OP_RELOP_NOEQ = 279,
+	OP_RELOP_EQ = 280,
+	OP_ADDOP_MIN = 281,
+	OP_ADDOP_ADD = 282,
+	OP_I_MULOP_M = 283,
+	OP_I_MULOP_D = 284,
+	OP_R_MULOP_M = 285,
+	OP_R_MULOP_D = 286,
+} Operator;
 
 typedef struct astNode {
   NodeType type;
@@ -31,6 +48,17 @@ typedef struct nodeList {
 	unsigned n;
 	ASTNode **nodes;
 } NodeList;
+
+typedef struct programNode {
+	unsigned name;
+	NodeList declarations;
+	ASTNode *compound;
+} ProgramNode;
+
+typedef struct declarationNode {
+	unsigned name;
+	Type type;
+} DeclarationNode;
 
 typedef struct iValueNode {
 	int value;
@@ -60,7 +88,7 @@ typedef struct arrayNode {
 typedef struct expressionNode {
 	ASTNode *left;
 	ASTNode *right;
-	Token operation;
+	Operator operation;
 } ExpressionNode;
 
 typedef struct functionCallNode{
@@ -94,27 +122,36 @@ typedef struct whileNode{
 	ASTNode *compound;
 } WhileNode;
 
-typedef struct programNode {
+typedef struct functionNode {
+	unsigned name;
+	Type type;
+	ASTNode *compound;
+} FunctionNode;
+
+typedef struct procedureNode {
 	unsigned name;
 	ASTNode *compound;
-} ProgramNode;
+} ProcedureNode;
 
 // Node creation
 ASTNode *createEmptyNode(NodeType);
 
+ASTNode *createProgramNode(unsigned, NodeList, ASTNode*);
+ASTNode *createDeclarationNode(unsigned, Type);
 ASTNode *createIValueNode(int);
 ASTNode *createRValueNode(float);
 ASTNode *createVariableNode(unsigned,Type);
 ASTNode *createArrayVariableNode(unsigned, Type, NodeList);
 ASTNode *createArrayNode(unsigned, Type, ASTNode*);
-ASTNode *createExpressionNode(ASTNode*, ASTNode*, Token);
+ASTNode *createExpressionNode(ASTNode*, ASTNode*, Operator);
 ASTNode *createFunctionCallNode(unsigned, Type, NodeList);
 ASTNode *createProcedureCallNode(unsigned, NodeList);
 ASTNode *createCompoundStatementNode(NodeList);
 ASTNode *createAssignmentNode(ASTNode*, ASTNode*);
 ASTNode *createIfElseNode(ASTNode*, ASTNode*, ASTNode*);
 ASTNode *createWhileNode(ASTNode*, ASTNode*);
-ASTNode *createProgramNode(unsigned, ASTNode*);
+ASTNode *createFunctionNode(unsigned,Type, ASTNode*);
+ASTNode *createProcedureNode(unsigned, ASTNode*);
 
 
 /*

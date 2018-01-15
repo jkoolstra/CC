@@ -1,7 +1,7 @@
 
 %{
     #define _PARSER_L
-	#include "tokens.h"
+	//#include "tokens.h"
     #include "mini_pascal.tab.h" // YYSTYPE yylval
     #include <stdio.h>
     #include <string.h>

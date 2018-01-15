@@ -1,9 +1,9 @@
 PROGRAM prime(input, output);
 VAR p : integer;
-
-procedure isPrime(p : integer);
 var c : integer;
-begin
+
+BEGIN
+	{readln(p);}
 	c := 2;
 	while c * c <= p do
 	begin
@@ -23,10 +23,5 @@ begin
 			c := p
 		end
 	end
-end;
-
-BEGIN
-	{readln(p);}
-	isPrime(p)
 END
 .

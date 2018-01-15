@@ -1,6 +1,7 @@
 
 %{
-	#include "tokens.h"
+	//#include "tokens.h"
+	#include "IRGenerator.h"
     #include "IdEntry.h"
 	#include "AST.h"
     #include <stdio.h>
@@ -19,7 +20,7 @@
 	void checkIfArrayIndexIsInteger(ASTNode*);
 	void checkIfMultipleArrayIndicesAreAllIntegers(NodeList);			//TODO: ADD this functionality back
 	void checkParameterCountAndTypes(unsigned id, NodeList list, IdType type);
-    void checkTypes(ASTNode*, ASTNode*, enum yytokentype);
+    void checkTypes(ASTNode*, ASTNode*, Operator);
 
 	// DECLARING
     void declareFunctionLocallyAsVariable(StrtabIndexList, Type type);
@@ -34,6 +35,7 @@
     void warningMessage(char *msg);
 
     SymbolStack stack;
+	ASTNode *programNode;
 %}
 
 %union{
@@ -58,8 +60,8 @@
 %token INUM RNUM ID
 
 %type <node> Factor Term Simple_expression Expression Procedure_statement Statement Compound_statement Variable
-%type <nodeList> Expression_list Statement_list Optional_statements
-%type <indexList> Identifier_list
+%type <nodeList> Expression_list Statement_list Optional_statements Declarations
+%type <indexList> Identifier_list Subprogram_head
 %type <parameterList> Parameter_list Arguments
 %type <type> Standard_type Type
 
@@ -80,7 +82,9 @@ Program : PROGRAM
             Declarations
             Subprogram_declarations
             Compound_statement
-            '.'
+            '.'								{
+												programNode = createProgramNode($2.indices[0], $7, $9);
+											}
 
 Identifier_list : ID { $$ = $1; }
                 | Identifier_list ',' ID    {
@@ -89,8 +93,17 @@ Identifier_list : ID { $$ = $1; }
 
 Declarations    : Declarations VAR Identifier_list ':' Type ';' {
                                                                     declareVariable($3, $5);
+																	NodeList combined = $1;
+																	for(int i = 0; i < $3.numberOfIndices ; i++){
+																		ASTNode *declaration = createDeclarationNode($3.indices[i], $5);
+																		NodeList declarations = createNodeList(declaration);
+																		combined = combineNodeLists(combined, declarations);
+																	}
+																	$$ = combined;
                                                                 }
-                | /* Empty */
+                | /* Empty */									{
+																	$$ = createEmptyNodeList();
+																}
 
 
 Type            : Standard_type {
@@ -123,6 +136,7 @@ Subprogram_head : FUNCTION
                                                             indent(&stack);
                                                             declareFunctionLocallyAsVariable($2, $5);
                                                             declareParametersLocallyAsVariables($3);
+															$$ = $2;
                                                         }
                 | PROCEDURE
                     ID
@@ -130,6 +144,7 @@ Subprogram_head : FUNCTION
                                         declareProcedure($2, $3);
                                         indent(&stack);
                                         declareParametersLocallyAsVariables($3);
+										$$ = $2;
                                     }
 
 Arguments       : '(' Parameter_list ')'    {
@@ -229,34 +244,28 @@ Expression      : Simple_expression                           		{
                                                                   		$$ = $1;
                                                               		}
                 | Simple_expression RELOP_GR Simple_expression   	{
-																		checkTypes($1, $3, RELOP_GR);
-																		$$ = createExpressionNode($1, $3, RELOP_GR);
-																		//printf("[%d] < type : %s\n", lineno, baseTypeString(determineType($$).base));
+																		checkTypes($1, $3, OP_RELOP_GR);
+																		$$ = createExpressionNode($1, $3, OP_RELOP_GR);
                                                               		}
                 | Simple_expression RELOP_GREQ Simple_expression   	{
-																		checkTypes($1, $3, RELOP_GREQ);
-																		$$ = createExpressionNode($1, $3, RELOP_GREQ);
-																		//printf("[%d] <= type : %s\n", lineno, baseTypeString(determineType($$).base));
+																		checkTypes($1, $3, OP_RELOP_GREQ);
+																		$$ = createExpressionNode($1, $3, OP_RELOP_GREQ);
                                                               		}
                 | Simple_expression RELOP_SM Simple_expression   	{
-																		checkTypes($1, $3, RELOP_SM);
-																		$$ = createExpressionNode($1, $3, RELOP_SM);
-																		//printf("[%d] > type : %s\n", lineno, baseTypeString(determineType($$).base));
+																		checkTypes($1, $3, OP_RELOP_SM);
+																		$$ = createExpressionNode($1, $3, OP_RELOP_SM);
                                                               		}
                 | Simple_expression RELOP_SMEQ Simple_expression   	{
-																		checkTypes($1, $3, RELOP_SMEQ);
-																		$$ = createExpressionNode($1, $3, RELOP_SMEQ);
-																		//printf("[%d] >= type : %s\n", lineno, baseTypeString(determineType($$).base));
+																		checkTypes($1, $3, OP_RELOP_SMEQ);
+																		$$ = createExpressionNode($1, $3, OP_RELOP_SMEQ);
                                                               		}
                 | Simple_expression RELOP_NOEQ Simple_expression   	{
-																		checkTypes($1, $3, RELOP_NOEQ);
-																		$$ = createExpressionNode($1, $3, RELOP_NOEQ);
-																		//printf("[%d] <> type : %s\n", lineno, baseTypeString(determineType($$).base));
+																		checkTypes($1, $3, OP_RELOP_NOEQ);
+																		$$ = createExpressionNode($1, $3, OP_RELOP_NOEQ);
                                                               		}
                 | Simple_expression RELOP_EQ Simple_expression   	{
-																		checkTypes($1, $3, RELOP_EQ);
-																		$$ = createExpressionNode($1, $3, RELOP_EQ);
-																		//printf("[%d] = type : %s\n", lineno, baseTypeString(determineType($$).base));
+																		checkTypes($1, $3, OP_RELOP_EQ);
+																		$$ = createExpressionNode($1, $3, OP_RELOP_EQ);
                                                               		}
 
 Simple_expression   : Term                          {
@@ -269,32 +278,32 @@ Simple_expression   : Term                          {
                                                         $$ = $2;		// TODO: Not ignore the addop
                                                     }
                     | Simple_expression ADDOP_MIN Term  {
-                                                        	checkTypes($1, $3, ADDOP_MIN);
-															$$ = createExpressionNode($1, $3, ADDOP_MIN);
+                                                        	checkTypes($1, $3, OP_ADDOP_MIN);
+															$$ = createExpressionNode($1, $3, OP_ADDOP_MIN);
                                                     	}
                     | Simple_expression ADDOP_ADD Term  {
-                                                        	checkTypes($1, $3, ADDOP_ADD);
-															$$ = createExpressionNode($1, $3, ADDOP_ADD);
+                                                        	checkTypes($1, $3, OP_ADDOP_ADD);
+															$$ = createExpressionNode($1, $3, OP_ADDOP_ADD);
                                                     	}
 
 Term            : Factor                        {
                                                     $$ = $1;
                                                 }
                 | Term R_MULOP_D Factor         {
-													checkTypes($1, $3, R_MULOP_D);
-													$$ = createExpressionNode($1, $3, R_MULOP_D);
+													checkTypes($1, $3, OP_R_MULOP_D);
+													$$ = createExpressionNode($1, $3, OP_R_MULOP_D);
                                                 }
                 | Term R_MULOP_M Factor         {
-													checkTypes($1, $3, R_MULOP_M);
-													$$ = createExpressionNode($1, $3, R_MULOP_M);
+													checkTypes($1, $3, OP_R_MULOP_M);
+													$$ = createExpressionNode($1, $3, OP_R_MULOP_M);
                                                 }
                 | Term I_MULOP_D Factor         {
-													checkTypes($1, $3, I_MULOP_D);
-													$$ = createExpressionNode($1, $3, I_MULOP_D);
+													checkTypes($1, $3, OP_I_MULOP_D);
+													$$ = createExpressionNode($1, $3, OP_I_MULOP_D);
                                                 }
                 | Term I_MULOP_M Factor         {
-													checkTypes($1, $3, I_MULOP_M);
-													$$ = createExpressionNode($1, $3, I_MULOP_M);
+													checkTypes($1, $3, OP_I_MULOP_M);
+													$$ = createExpressionNode($1, $3, OP_I_MULOP_M);
                                                 }
 
 Factor          : ID                            {
@@ -330,6 +339,7 @@ Factor          : ID                            {
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = createArrayNode($1.indices[0], *data->type, $3);
+													//printf("Array\n");
                                                 }
 
 %%
@@ -417,17 +427,17 @@ void checkIfMultipleArrayIndicesAreAllIntegers(NodeList indices){
 	}
 }
 
-void checkTypes(ASTNode *node1, ASTNode *node2, enum yytokentype token){
+void checkTypes(ASTNode *node1, ASTNode *node2, Operator operator){
 	Type t1 = determineType(node1);
 	Type t2 = determineType(node2);
 
-  switch(token){
-	case RELOP_GR :
-  	case RELOP_GREQ :
-  	case RELOP_SM :
-  	case RELOP_SMEQ :
-  	case RELOP_NOEQ :
-  	case RELOP_EQ : {
+  switch(operator){
+	case OP_RELOP_GR :
+  	case OP_RELOP_GREQ :
+  	case OP_RELOP_SM :
+  	case OP_RELOP_SMEQ :
+  	case OP_RELOP_NOEQ :
+  	case OP_RELOP_EQ : {
       if(t1.base != t1.base){
         char *war;
         asprintf(&war, "comparing integers with reals");
@@ -435,8 +445,8 @@ void checkTypes(ASTNode *node1, ASTNode *node2, enum yytokentype token){
       }
 	  return;
     }
-	case I_MULOP_D :
-    case I_MULOP_M : {
+	case OP_I_MULOP_D :
+    case OP_I_MULOP_M : {
       if(t1.base == TYPE_REAL || t2.base == TYPE_REAL){
         char *war;
         asprintf(&war, "integer operation on real");
@@ -444,10 +454,10 @@ void checkTypes(ASTNode *node1, ASTNode *node2, enum yytokentype token){
       }
       return;
     }
-	case R_MULOP_D :
-    case R_MULOP_M :
-	case ADDOP_ADD :
-    case ADDOP_MIN : return;
+	case OP_R_MULOP_D :
+    case OP_R_MULOP_M :
+	case OP_ADDOP_ADD :
+    case OP_ADDOP_MIN : return;
     default: { // SHOULD NEVER OCCUR
       char *err;
       asprintf(&err, "invalid binary token, something went very very very wrong...");
@@ -593,6 +603,7 @@ int main(int argc, char **argv) {
     stack = initSymbolStack(&strTab);
     yyparse();
     printf("\x1B[32m" "ACCEPTED\n" "\x1B[0m");
+	generateIR(stdin, programNode);
     freeSymbolStack(&stack);
     freeStringTable(strTab);
     return 0;

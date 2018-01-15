@@ -3,10 +3,34 @@
 #include <string.h>
 #include "common.h"
 #include "AST.h"
+#include "IRGenerator.h"
 
 ASTNode *createEmptyNode(NodeType type){
 	ASTNode *node = safeMalloc(sizeof(IValueNode));
 	node->type = type;
+
+	return node;
+}
+
+ASTNode *createProgramNode(unsigned name, NodeList declarations, ASTNode *compound){
+	ProgramNode *data = safeMalloc(sizeof(ProgramNode));
+	data->name = name;
+	data->declarations = declarations;
+	data->compound = compound;
+
+	ASTNode *node = createEmptyNode(NODE_PROGRAM);
+	node->data = data;
+
+	return node;
+}
+
+ASTNode *createDeclarationNode(unsigned name, Type type){
+	DeclarationNode *data = safeMalloc(sizeof(DeclarationNode));
+	data->name = name;
+	data->type = type;
+
+	ASTNode *node = createEmptyNode(NODE_IVALUE);
+	node->data = data;
 
 	return node;
 }
@@ -67,7 +91,7 @@ ASTNode *createArrayNode(unsigned name, Type type, ASTNode *index){
 	return node;
 }
 
-ASTNode *createExpressionNode(ASTNode *left, ASTNode *right, Token operation){
+ASTNode *createExpressionNode(ASTNode *left, ASTNode *right, Operator operation){
 	ExpressionNode *data = safeMalloc(sizeof(ExpressionNode));
 	data->left = left;
 	data->right = right;
@@ -146,12 +170,24 @@ ASTNode *createWhileNode(ASTNode *condition, ASTNode *compound){
 	return node;
 }
 
-ASTNode *createProgramNode(unsigned name, ASTNode *compound){
-	ProgramNode *data = safeMalloc(sizeof(ProgramNode));
+ASTNode *createFunctionNode(unsigned name, Type type, ASTNode *compound){
+	FunctionNode *data = safeMalloc(sizeof(FunctionNode));
+	data->name = name;
+	data->type = type;
+	data->compound = compound;
+
+	ASTNode *node = createEmptyNode(NODE_FUNCTION);
+	node->data = data;
+
+	return node;
+}
+
+ASTNode *createProceduremNode(unsigned name, ASTNode *compound){
+	ProcedureNode *data = safeMalloc(sizeof(ProcedureNode));
 	data->name = name;
 	data->compound = compound;
 
-	ASTNode *node = createEmptyNode(NODE_PROGRAM);
+	ASTNode *node = createEmptyNode(NODE_PROCEDURE);
 	node->data = data;
 
 	return node;
@@ -206,18 +242,17 @@ Type determineExpressionType(void *data){
 	Type rightType = determineType(node->right);
 
 	switch(node->operation){
-  		case RELOP_GR :
-    	case RELOP_GREQ :
-    	case RELOP_SM :
-    	case RELOP_SMEQ :
-    	case RELOP_NOEQ :
-    	case RELOP_EQ : { return makeType(TYPE_BOOL, TYPE_SCALAR); }
-  		case I_MULOP_D :
-      	case I_MULOP_M : { return makeType(TYPE_INTEGER, TYPE_SCALAR); }
-  		case R_MULOP_D :
-      	case R_MULOP_M : return makeType(TYPE_REAL, TYPE_SCALAR);
-  		case ADDOP_ADD :
-      	case ADDOP_MIN : {
+  		case OP_RELOP_GR :
+    	case OP_RELOP_GREQ :
+    	case OP_RELOP_SM :
+    	case OP_RELOP_SMEQ :
+    	case OP_RELOP_NOEQ :
+    	case OP_RELOP_EQ : return makeType(TYPE_BOOL, TYPE_SCALAR);
+      	case OP_I_MULOP_M : return makeType(TYPE_INTEGER, TYPE_SCALAR);
+  		case OP_R_MULOP_D :
+      	case OP_R_MULOP_M : return makeType(TYPE_REAL, TYPE_SCALAR);
+  		case OP_ADDOP_ADD :
+      	case OP_ADDOP_MIN : {
 			if(leftType.base == TYPE_REAL || rightType.base == TYPE_REAL) {
 				return makeType(TYPE_REAL, TYPE_SCALAR);
 			} else {
@@ -243,6 +278,9 @@ Type determineType(ASTNode *node){
 		case NODE_IF_ELSE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
 		case NODE_WHILE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
 		case NODE_PROGRAM: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
+		case NODE_FUNCTION: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
+		case NODE_PROCEDURE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
+		case NODE_DECLARATION: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
 	}
 }
 
@@ -282,7 +320,19 @@ void freeNode(ASTNode *node){
 			//TODO
 			break;
 		}
+		case NODE_FUNCTION : {
+			//TODO
+			break;
+		}
+		case NODE_PROCEDURE : {
+			//TODO
+			break;
+		}
 		case NODE_PROGRAM : {
+			//TODO
+			break;
+		}
+		case NODE_DECLARATION : {
 			//TODO
 			break;
 		}
