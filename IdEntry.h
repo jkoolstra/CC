@@ -27,6 +27,8 @@ typedef enum baseType {
 typedef struct type {
 	BaseType base;
 	SecondaryType secondary;
+	unsigned low;
+	unsigned high;
 } Type;
 
 typedef struct typeList {
@@ -76,7 +78,7 @@ char *baseTypeString(BaseType type);
 
 //INITIALIZING
 IdEntry makeIdEntry(unsigned);
-Type makeType(BaseType, SecondaryType);
+Type makeType(BaseType, SecondaryType, unsigned, unsigned);
 ParameterList createParameterList(StrtabIndexList list, Type t);
 TypeList createTypeList(Type t);
 

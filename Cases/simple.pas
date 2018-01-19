@@ -1,8 +1,15 @@
 PROGRAM alt(ctrl);
-var x : integer;
+var x, y : integer;
+var z : real;
 var as : array [1 .. 3] of integer;
 begin
-	{x := 0;}
-	as[1] := 1
+	x := 1;
+	y := 3.14;
+	y := x - 2 * y;
+	as[x,2,3] := 1;
+	z := as[x];
+	writeln(1, z);
+	readln(z);
+	writeln(z)
 end
 .

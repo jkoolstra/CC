@@ -58,9 +58,10 @@
 %token I_MULOP_M I_MULOP_D
 %token R_MULOP_M R_MULOP_D
 %token INUM RNUM ID
+%token READLN WRITELN
 
-%type <node> Factor Term Simple_expression Expression Procedure_statement Statement Compound_statement Variable
-%type <nodeList> Expression_list Statement_list Optional_statements Declarations
+%type <node> Factor Term Simple_expression Expression Procedure_statement Statement Compound_statement Variable Variable_factor
+%type <nodeList> Expression_list Statement_list Optional_statements Declarations Variable_factor_list
 %type <indexList> Identifier_list Subprogram_head
 %type <parameterList> Parameter_list Arguments
 %type <type> Standard_type Type
@@ -107,10 +108,10 @@ Declarations    : Declarations VAR Identifier_list ':' Type ';' {
 
 
 Type            : Standard_type {
-                                    $$ = makeType($1.base, TYPE_SCALAR);
+                                    $$ = makeType($1.base, TYPE_SCALAR, 0, 0);
                                 }
                 | ARRAY '[' INUM '.''.' INUM ']' OF Standard_type   {
-                                                                        $$ = makeType($9.base, TYPE_ARRAY);
+                                                                        $$ = makeType($9.base, TYPE_ARRAY, $3, $6);
                                                                     }
 
 Standard_type   : INTEGER   {
@@ -184,6 +185,7 @@ Statement_list  : Statement							{
 
 Statement       : Variable ASSIGNOP Expression 	{
 	 												checkAssignment($1, $3);
+													printf("ASSIGNMENT\n");
 													$$ = createAssignmentNode($1, $3);
 												}
                 | Procedure_statement							{
@@ -199,6 +201,12 @@ Statement       : Variable ASSIGNOP Expression 	{
                 | WHILE Expression DO Statement					{
 																	checkCondition($2);
 																	$$ = createWhileNode($2, $4);
+																}
+				| READLN '(' Variable_factor_list ')'			{
+																	$$ = createReadLnNode($3);
+																}
+				| WRITELN '(' Expression_list ')'				{
+																	$$ = createWriteLnNode($3);
 																}
 
 Variable        : ID                          {
@@ -231,7 +239,7 @@ Procedure_statement : ID                        {
 														$$ = createProcedureCallNode($1.indices[0], $3);
 													}
 
-Expression_list : Expression						{
+Expression_list : Expression						{	printf("EXPRESSION LIST");
 														NodeList list = createNodeList($1);
 														$$ = list;
 													}
@@ -240,8 +248,9 @@ Expression_list : Expression						{
 														$$ = list;
 													}
 
-Expression      : Simple_expression                           		{
+Expression      : Simple_expression                           		{	printf("EXPRESIION\n");
                                                                   		$$ = $1;
+																		printf("EXPRESIION\n");
                                                               		}
                 | Simple_expression RELOP_GR Simple_expression   	{
 																		checkTypes($1, $3, OP_RELOP_GR);
@@ -281,7 +290,7 @@ Simple_expression   : Term                          {
                                                         	checkTypes($1, $3, OP_ADDOP_MIN);
 															$$ = createExpressionNode($1, $3, OP_ADDOP_MIN);
                                                     	}
-                    | Simple_expression ADDOP_ADD Term  {
+                    | Simple_expression ADDOP_ADD Term  { 	
                                                         	checkTypes($1, $3, OP_ADDOP_ADD);
 															$$ = createExpressionNode($1, $3, OP_ADDOP_ADD);
                                                     	}
@@ -306,14 +315,7 @@ Term            : Factor                        {
 													$$ = createExpressionNode($1, $3, OP_I_MULOP_M);
                                                 }
 
-Factor          : ID                            {
-                                                    checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
-                                                    IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
-                                                    VariableData *data = (VariableData *)entry->data;
-                                                    $$ = createVariableNode($1.indices[0], *data->type);
-
-                                                }
+Factor          : Variable_factor				{ $$ = $1; }
                 | ID '(' Expression_list ')'    {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
                                                     checkIdentifierIdType($1.indices[0], TYPE_FUNCTION);
@@ -331,7 +333,24 @@ Factor          : ID                            {
                 | '(' Expression ')'            {
                                                     $$ = $2;
                                                 }
-                | ID '[' Simple_expression ']'  {
+
+Variable_factor_list	: Variable_factor							{
+																		NodeList list = createNodeList($1);
+																		$$ = list;
+																	}
+						| Variable_factor_list',' Variable_factor		{
+																		NodeList list = combineNodeLists($1, createNodeList($3));
+																		$$ = list;
+																	}
+
+Variable_factor : ID                            {
+                                                    checkIfIdentifierIsDeclared($1.indices[0]);
+                                                    checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
+                                                    IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+                                                    VariableData *data = (VariableData *)entry->data;
+                                                    $$ = createVariableNode($1.indices[0], *data->type);
+                								}
+				| ID '[' Simple_expression ']'  {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
                                                     checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
                                                     checkIdentifierSecondaryType($1.indices[0], TYPE_ARRAY);
@@ -339,7 +358,6 @@ Factor          : ID                            {
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = createArrayNode($1.indices[0], *data->type, $3);
-													//printf("Array\n");
                                                 }
 
 %%
@@ -598,12 +616,20 @@ void warningMessage(char *msg){
 
 // ------------- MAIN --------------------------
 int main(int argc, char **argv) {
+	char *name = "code.c";
+	FILE *fp=fopen(name, "w");
+	if(fp == NULL){
+		errorMessage("File not opened");
+	}
+	//fclose(fp);
     //yydebug = 1;
     strTab = newStringTable(0);
     stack = initSymbolStack(&strTab);
     yyparse();
+	printStringTable(*stack.strTab);
     printf("\x1B[32m" "ACCEPTED\n" "\x1B[0m");
-	generateIR(stdin, programNode);
+	generateIR(fp, programNode);
+	fclose(fp);
     freeSymbolStack(&stack);
     freeStringTable(strTab);
     return 0;

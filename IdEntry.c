@@ -81,10 +81,12 @@ IdEntry makeIdEntry(unsigned index){
     return entry;
 }
 
-Type makeType(BaseType tb, SecondaryType ts){
+Type makeType(BaseType tb, SecondaryType ts, unsigned low, unsigned high){
   Type t;
   t.base = tb;
   t.secondary = ts;
+  t.low = low;
+  t.high = high;
   return t;
 }
 

@@ -6,6 +6,7 @@
 #include "IdEntry.h"
 
 typedef enum nodeType {
+	NODE_PROGRAM,
 	NODE_DECLARATION,
 	NODE_IVALUE,
 	NODE_RVALUE,
@@ -21,7 +22,8 @@ typedef enum nodeType {
 	NODE_WHILE,
 	NODE_FUNCTION,
 	NODE_PROCEDURE,
-	NODE_PROGRAM
+	NODE_READLN,
+	NODE_WRITELN
 } NodeType;
 
 typedef enum operator {
@@ -65,7 +67,7 @@ typedef struct iValueNode {
 } IValueNode;
 
 typedef struct rValueNode {
-	int value;
+	float value;
 } RValueNode;
 
 typedef struct variableNode {
@@ -133,6 +135,14 @@ typedef struct procedureNode {
 	ASTNode *compound;
 } ProcedureNode;
 
+typedef struct readLnNode {
+	NodeList factors;
+} ReadLnNode;
+
+typedef struct writeLnNode {
+	NodeList arguments;
+} WriteLnNode;
+
 // Node creation
 ASTNode *createEmptyNode(NodeType);
 
@@ -152,6 +162,8 @@ ASTNode *createIfElseNode(ASTNode*, ASTNode*, ASTNode*);
 ASTNode *createWhileNode(ASTNode*, ASTNode*);
 ASTNode *createFunctionNode(unsigned,Type, ASTNode*);
 ASTNode *createProcedureNode(unsigned, ASTNode*);
+ASTNode *createReadLnNode(NodeList);
+ASTNode *createWriteLnNode(NodeList);
 
 
 /*

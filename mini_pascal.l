@@ -9,8 +9,8 @@
     #include "IdEntry.h"
     #include "common.h"
 
-	#define PRINT 0
-	#define INDENT 0
+	#define PRINT 1
+	#define INDENT 1
 	#define LINES 0
 
 int lineno = 1;
@@ -57,6 +57,8 @@ I_MULOP_M	"mod"
 
 <*>\n               { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} ++lineno; }
 
+writeln				{ if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");}  return WRITELN; }
+readln				{ if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");}  return READLN; }
 do                  { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");}  return DO; }
 function            { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return FUNCTION; }
 program             { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return PROGRAM; }
@@ -86,9 +88,9 @@ end                 { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} 
 {R_MULOP_M}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return R_MULOP_M; }
 {I_MULOP_D}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return I_MULOP_D; }
 {I_MULOP_M}         { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return I_MULOP_M; }
-{INTEGER_NUMBER}    { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return INUM; }
-{REAL_NUMBER}       { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return RNUM; }
-{ID}                { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");}  makeIdentifier(); return ID;  }
+{INTEGER_NUMBER}    { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} yylval.iValue = atoi(yytext); return INUM; }
+{REAL_NUMBER}       { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} yylval.rValue = atof(yytext);return RNUM; }
+{ID}                { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} makeIdentifier(); return ID;  }
 .                   { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} return *yytext; }
 
 %%

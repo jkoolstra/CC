@@ -138,6 +138,7 @@ ASTNode *createCompoundStatementNode(NodeList statements){
 
 ASTNode *createAssignmentNode(ASTNode *left, ASTNode *right){
 	AssignmentNode *data = safeMalloc(sizeof(AssignmentNode));
+
 	data->left = left;
 	data->right = right;
 
@@ -193,6 +194,26 @@ ASTNode *createProceduremNode(unsigned name, ASTNode *compound){
 	return node;
 }
 
+ASTNode *createReadLnNode(NodeList list){
+	ReadLnNode *data = safeMalloc(sizeof(ReadLnNode));
+	data->factors = list;
+
+	ASTNode *node = createEmptyNode(NODE_READLN);
+	node->data = data;
+
+	return node;
+}
+
+ASTNode *createWriteLnNode(NodeList arguments){
+	WriteLnNode *data = safeMalloc(sizeof(WriteLnNode));
+	data->arguments = arguments;
+
+	ASTNode *node = createEmptyNode(NODE_WRITELN);
+	node->data = data;
+
+	return node;
+}
+
 // Node list
 NodeList createEmptyNodeList(){
     NodeList list;
@@ -234,10 +255,9 @@ NodeList combineNodeLists(NodeList listOne, NodeList listTwo){
 }
 
 // Helper
-Type determineExpressionType(void *data){
+Type determineExpressionType(ASTNode *initial){
 	// TODO THERE ARE SOME ISSUES WITH CONDITIONS
-
-	ExpressionNode *node = (ExpressionNode *)data;
+	ExpressionNode *node = (ExpressionNode *)initial->data;
 	Type leftType = determineType(node->left);
 	Type rightType = determineType(node->right);
 
@@ -247,40 +267,42 @@ Type determineExpressionType(void *data){
     	case OP_RELOP_SM :
     	case OP_RELOP_SMEQ :
     	case OP_RELOP_NOEQ :
-    	case OP_RELOP_EQ : return makeType(TYPE_BOOL, TYPE_SCALAR);
-      	case OP_I_MULOP_M : return makeType(TYPE_INTEGER, TYPE_SCALAR);
+    	case OP_RELOP_EQ : return makeType(TYPE_BOOL, TYPE_SCALAR, 0, 0);
+      	case OP_I_MULOP_M : return makeType(TYPE_INTEGER, TYPE_SCALAR ,0, 0);
   		case OP_R_MULOP_D :
-      	case OP_R_MULOP_M : return makeType(TYPE_REAL, TYPE_SCALAR);
+      	case OP_R_MULOP_M : return makeType(TYPE_REAL, TYPE_SCALAR, 0, 0);
   		case OP_ADDOP_ADD :
       	case OP_ADDOP_MIN : {
 			if(leftType.base == TYPE_REAL || rightType.base == TYPE_REAL) {
-				return makeType(TYPE_REAL, TYPE_SCALAR);
+				return makeType(TYPE_REAL, TYPE_SCALAR, 0, 0);
 			} else {
-				return makeType(TYPE_INTEGER, TYPE_SCALAR);
+				return makeType(TYPE_INTEGER, TYPE_SCALAR, 0, 0);
 			}
 		}
-      	default: return makeType(TYPE_REAL, TYPE_SCALAR); // SHOULD NEVER HAPPEN
+      	default: return makeType(TYPE_REAL, TYPE_SCALAR, 0, 0); // SHOULD NEVER HAPPEN
     }
 }
 
 Type determineType(ASTNode *node){
 	switch(node->type){
-		case NODE_IVALUE: return makeType(TYPE_INTEGER, TYPE_SCALAR);
-		case NODE_RVALUE: return makeType(TYPE_REAL, TYPE_SCALAR);
+		case NODE_IVALUE: return makeType(TYPE_INTEGER, TYPE_SCALAR, 0, 0);
+		case NODE_RVALUE: return makeType(TYPE_REAL, TYPE_SCALAR,0,0);
 		case NODE_VARIABLE: return ((VariableNode *)node->data)->type;
 		case NODE_ARRAY_VARIABLE : return ((ArrayVariableNode *)node->data)->type;
 		case NODE_ARRAY: return ((ArrayNode *)node->data)->type;
-		case NODE_EXPRESSION: return determineExpressionType(node->data);
+		case NODE_EXPRESSION: return determineExpressionType(node);
 		case NODE_FUNCTION_CALL: return ((FunctionCallNode *)node->data)->returnType;
 		case NODE_ASSIGNMENT: return determineType(((AssignmentNode *)node->data)->left);  // SHOULD NEVER HAPPEN
-		case NODE_COMPOUND_STATEMENT: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_PROCEDURE_CALL: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_IF_ELSE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_WHILE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_PROGRAM: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_FUNCTION: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_PROCEDURE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
-		case NODE_DECLARATION: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR);// SHOULD NEVER HAPPEN;
+		case NODE_COMPOUND_STATEMENT: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_PROCEDURE_CALL: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_IF_ELSE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_WHILE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_PROGRAM: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_FUNCTION: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_PROCEDURE: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_DECLARATION: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_READLN: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
+		case NODE_WRITELN: exit(EXIT_FAILURE); return makeType(TYPE_REAL, TYPE_SCALAR,0,0);// SHOULD NEVER HAPPEN;
 	}
 }
 
@@ -333,6 +355,14 @@ void freeNode(ASTNode *node){
 			break;
 		}
 		case NODE_DECLARATION : {
+			//TODO
+			break;
+		}
+		case NODE_READLN : {
+			//TODO
+			break;
+		}
+		case NODE_WRITELN : {
 			//TODO
 			break;
 		}

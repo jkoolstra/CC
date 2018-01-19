@@ -70,7 +70,9 @@
      R_MULOP_D = 286,
      INUM = 287,
      RNUM = 288,
-     ID = 289
+     ID = 289,
+     READLN = 290,
+     WRITELN = 291
    };
 #endif
 /* Tokens.  */
@@ -106,6 +108,8 @@
 #define INUM 287
 #define RNUM 288
 #define ID 289
+#define READLN 290
+#define WRITELN 291
 
 
 
@@ -125,7 +129,7 @@ typedef union YYSTYPE
     TypeList typeList;
 }
 /* Line 1529 of yacc.c.  */
-#line 129 "mini_pascal.tab.h"
+#line 133 "mini_pascal.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
