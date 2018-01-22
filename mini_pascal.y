@@ -172,7 +172,7 @@ Compound_statement  : BEG
                       END							{ $$ = createCompoundStatementNode($2);}
 
 Optional_statements : Statement_list				{ $$ = $1;}
-                    | /* Empty */
+                    | /* Empty */					{ $$ = createEmptyNodeList();}
 
 Statement_list  : Statement							{
 														NodeList list = createNodeList($1);
@@ -290,7 +290,7 @@ Simple_expression   : Term                          {
                                                         	checkTypes($1, $3, OP_ADDOP_MIN);
 															$$ = createExpressionNode($1, $3, OP_ADDOP_MIN);
                                                     	}
-                    | Simple_expression ADDOP_ADD Term  { 	
+                    | Simple_expression ADDOP_ADD Term  {
                                                         	checkTypes($1, $3, OP_ADDOP_ADD);
 															$$ = createExpressionNode($1, $3, OP_ADDOP_ADD);
                                                     	}
@@ -626,11 +626,10 @@ int main(int argc, char **argv) {
     strTab = newStringTable(0);
     stack = initSymbolStack(&strTab);
     yyparse();
-	printStringTable(*stack.strTab);
     printf("\x1B[32m" "ACCEPTED\n" "\x1B[0m");
 	generateIR(fp, programNode);
 	fclose(fp);
-    freeSymbolStack(&stack);
-    freeStringTable(strTab);
+    //freeSymbolStack(&stack);
+    //freeStringTable(strTab);
     return 0;
 }
