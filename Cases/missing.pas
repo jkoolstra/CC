@@ -3,17 +3,17 @@ program missing(input, output);
 var n, total, a, i : integer;
 
 begin
-    {readln(n);}
+    readln(n);
     total := n;
     i := 0;
 
     while i < n do
     begin
-        {readln(a);}
+        readln(a);
         total := total + i;
         total := total - a;
         i := i + 1
-    end
+    end;
 
-    {writeln(total)}
+    writeln(total)
 end.

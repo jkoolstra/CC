@@ -42,11 +42,11 @@ end;
 begin
     lcm := 1;
     i := 0;
-    {readln(n);}
+    readln(n);
 
     while i < n do
     begin
-        {readln(temp);}
+        readln(temp);
         p[i] := temp;
         loopLength[i] := 0;
         i := i + 1
@@ -58,7 +58,7 @@ begin
         l := loopLengthAt(p, n, i, i, 0, loopLength);
         lcm := lcm * l div gcd(lcm, l);
         i := i + 1
-    end
+    end;
 
-    {writeln(lcm)}
+    writeln(lcm)
 end.

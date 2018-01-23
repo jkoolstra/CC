@@ -1,5 +1,5 @@
-{ This is the Pasal implementation
-  of Euclid's algorithm for computing
+{ This is the Pasal implementation 
+  of Euclid's algorithm for computing 
   the greatest common divisor of two integers.
 }
 
@@ -31,7 +31,7 @@ end;
 
 { main program starts here }
 BEGIN
-  {readln(a,b);
+  readln(a,b);
   writeln(gcd_recursive(a,b));
-  writeln(gcd_iterative(a,b))}
+  writeln(gcd_iterative(a,b))
 END.

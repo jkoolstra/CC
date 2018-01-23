@@ -11,6 +11,6 @@ begin
    xy := x*y;
    xyz := -1*x + (-xy);
    x := -x - x;
-   z := as[2]
-   {writeln(z)}
+   z := as[2];
+   writeln(z)
 end.

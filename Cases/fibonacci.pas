@@ -32,21 +32,21 @@ begin
 end;
 
 begin
-    {readln(n);}
+    readln(n);
     i := 1;
     while i <= n do
     begin
-        {writeln(fib(i));}
+        writeln(fib(i));
         i := i + 1
     end;
     { the dynamic }
-    {writeln(fibMem(39));}
+    writeln(fibMem(39));
     { now for the array }
     i := 1;
     while i <= 39 do
     begin
         fibs[i] := fib(i);
         i := i + 1
-    end
-    {writeln(fibs[39])}
+    end;
+    writeln(fibs[39])
 end.

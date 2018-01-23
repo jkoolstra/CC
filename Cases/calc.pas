@@ -44,23 +44,30 @@ end;
 
 begin
 	r1 := 0.0;
-	r2 := 0.0;
+	r2 := 0.0; 
 	r3 := 0.0;
 	r4 := 0.0;
+	writeln(r1, r2, r3, r4);
+	readln(option);
 	while option <> 0 do
 	begin
 		if option <= 1 then
 		begin
+			readln(rid1, rt);
 			writeRegister(rid1, rt)
 		end
 		else if option <= 2 then
 		begin
-			writeRegister(rid1, (readRegister(rid2) + readRegister(rid3)))
+			readln(rid1, rid2, rid3);
+			writeRegister(rid1, readRegister(rid2) + readRegister(rid3))
 		end
 		else if option <= 3 then
 		begin
+			readln(rid1, rid2, rid3);
 			writeRegister(rid1, readRegister(rid2) * readRegister(rid3))
-		end else begin end
+		end else begin end;
+		writeln(r1, r2, r3, r4);
+		readln(option)
 	end
 end
 .

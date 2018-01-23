@@ -26,14 +26,14 @@ end;
 
 begin
     len := 0;
-    {readln(temp);}
+    readln(temp);
     series[len] := temp;
     while series[len] <> 0 do
     begin
         len := len + 1;
-        {readln(temp);}
+        readln(temp);
         series[len] := temp
     end;
-    len := len + 1
-    {writeln(isSolvable(len, series))}
+    len := len + 1;
+    writeln(isSolvable(len, series))
 end.

@@ -8,7 +8,7 @@ PROGRAM pyth(input, output);
 VAR a, b, c, t: integer;
 
 BEGIN
-	{readln(a, b, c);}
+	readln(a, b, c);
 	while a > b do
 	begin
 		t := a;
@@ -20,28 +20,20 @@ BEGIN
 		t := a;
 		a := c;
 		c := t
-	end; {a <= c && a <= b}
+	end; {a <= c && a <= b}	
 	while b > c do
 	begin
 		t := b;
 		b := c;
 		c := t
-	end; {a <= b <= c}
+	end; {a <= b <= c}	
 	if a + b <= c then
-    begin
-    end
-		{writeln(0)}
+		writeln(0)
 	else if a * a + b * b < c * c then
-    begin
-    end
-		{writeln(2)}
+		writeln(2)
 	else if a * a + b * b > c * c then
-    begin
-    end
-		{writeln(3)}
+		writeln(3)
 	else
-    begin
-    end
-		{writeln(1)}
+		writeln(1)
 END
 .

@@ -14,7 +14,7 @@ begin
             else begin end
         end else begin end
     end else begin end;
-
+    
     if(prodSumHelper = 0) then
     begin
         if sum > n then
@@ -34,6 +34,6 @@ begin
 end;
 
 begin
-    {readln(n);
-    writeln(prodSum(n))}
+    readln(n);
+    writeln(prodSum(n))
 end.

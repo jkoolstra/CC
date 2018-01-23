@@ -110,7 +110,7 @@ void generateExpression(FILE* file, ASTNode *given){
 	Type expressionType = determineType(given);
 	if(expressionType.base == TYPE_REAL){
 		fprintf(file,"\tfloat t%d = t%d %s t%d;\n", idx, leftIdx, operatorString(var->operation), rightIdx);
-	} if(expressionType.base == TYPE_BOOL){
+	} else if(expressionType.base == TYPE_BOOL){
 		fprintf(file,"\tint t%d = t%d %s t%d;\n", idx, leftIdx, operatorString(var->operation), rightIdx); // Maybe we could rewrite the expresiion to the form x == 0 instead
 	}
 	else {
@@ -164,6 +164,7 @@ void generateWhileStatement(FILE* file, ASTNode *given){
 	generate(file, whil->compound);
 	fprintf(file,"\tgoto lb%d;\n",lblIdx-1);
 	fprintf(file,"lb%d: ;\n",lblIdx);
+	lblIdx++;
 }
 
 void generateIfStatement(FILE* file, ASTNode *given){
