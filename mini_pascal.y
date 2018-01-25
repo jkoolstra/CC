@@ -185,7 +185,6 @@ Statement_list  : Statement							{
 
 Statement       : Variable ASSIGNOP Expression 	{
 	 												checkAssignment($1, $3);
-													printf("ASSIGNMENT\n");
 													$$ = createAssignmentNode($1, $3);
 												}
                 | Procedure_statement							{
@@ -239,7 +238,7 @@ Procedure_statement : ID                        {
 														$$ = createProcedureCallNode($1.indices[0], $3);
 													}
 
-Expression_list : Expression						{	printf("EXPRESSION LIST");
+Expression_list : Expression						{
 														NodeList list = createNodeList($1);
 														$$ = list;
 													}
@@ -248,9 +247,8 @@ Expression_list : Expression						{	printf("EXPRESSION LIST");
 														$$ = list;
 													}
 
-Expression      : Simple_expression                           		{	printf("EXPRESIION\n");
+Expression      : Simple_expression                           		{
                                                                   		$$ = $1;
-																		printf("EXPRESIION\n");
                                                               		}
                 | Simple_expression RELOP_GR Simple_expression   	{
 																		checkTypes($1, $3, OP_RELOP_GR);
@@ -637,6 +635,7 @@ int main(int argc, char **argv) {
 	fclose(output);
     //freeSymbolStack(&stack);
     //freeStringTable(strTab);
+	freeNode(programNode);
 	finalizeLexer();
     return 0;
 }

@@ -72,7 +72,6 @@ void generateReadLn(FILE *file, ASTNode *given){
 			VariableNode *var = (VariableNode *)current->data;
 			fprintf(file,"\tvar%d = t%d;\n", var->name, intialIdx);
 		} else if(current->type == NODE_ARRAY){
-			printf("Now it works\n");
 			ArrayNode *var = (ArrayNode *)current->data;
 			generate(file, var->index);
 			int idxExpr = idx - 1;
@@ -237,7 +236,6 @@ void generateIR(FILE *file, ASTNode *programNode){
 	if(programNode->type != NODE_PROGRAM){
 		exit(EXIT_FAILURE); // TODO : move error handling to seperate module
 	} else {
-		printf("GENERATING\n");
 		generate(file, programNode);
 	}
 }

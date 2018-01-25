@@ -230,14 +230,6 @@ NodeList createNodeList(ASTNode *node){
 	return list;
 }
 
-void appendToNodeLists(NodeList* list, ASTNode *node){
-	printListNode(*list);
-    list->n = list->n + 1;
-    safeRealloc(list->nodes, list->n * sizeof(ASTNode *));
-	list->nodes[list->n - 1] = node;
-	printListNode(*list);
-}
-
 NodeList combineNodeLists(NodeList listOne, NodeList listTwo){
 	// TODO : Free lists
 	NodeList combinedList;
@@ -271,7 +263,7 @@ Type determineExpressionType(ASTNode *initial){
 		case OP_I_MULOP_D :
       	case OP_I_MULOP_M : return makeType(TYPE_INTEGER, TYPE_SCALAR ,0, 0);
   		case OP_R_MULOP_D :
-      	case OP_R_MULOP_M : return makeType(TYPE_REAL, TYPE_SCALAR, 0, 0);
+      	case OP_R_MULOP_M :
   		case OP_ADDOP_ADD :
       	case OP_ADDOP_MIN : {
 			if(leftType.base == TYPE_REAL || rightType.base == TYPE_REAL) {
@@ -307,12 +299,22 @@ Type determineType(ASTNode *node){
 	}
 }
 
+void freeNodeList(NodeList list){
+	for(int i = 0; i < list.n; i++){
+		freeNode(list.nodes[i]);
+	}
+	free(list.nodes);
+}
+
 void freeNode(ASTNode *node){
 	switch(node->type){
 		case NODE_IVALUE: break;
 		case NODE_RVALUE: break;
 		case NODE_VARIABLE: break;
-		case NODE_ARRAY_VARIABLE: break; // TODO: free indices
+		case NODE_ARRAY_VARIABLE: {
+			freeNodeList(((ArrayVariableNode *)node->data)->indices);
+			break;
+		}
 		case NODE_ARRAY: break;	// TODO : free index
 		case NODE_EXPRESSION: {
 			freeNode(((ExpressionNode *)node->data)->left);
@@ -320,51 +322,55 @@ void freeNode(ASTNode *node){
 			break;
 		}
 		case NODE_FUNCTION_CALL: {
-			// TODO
+			freeNodeList(((FunctionCallNode *)node->data)->arguments);
 			break;
 		}
 		case NODE_PROCEDURE_CALL: {
-			// TODO
+			freeNodeList(((ProcedureCallNode *)node->data)->arguments);
 			break;
 		}
 		case NODE_COMPOUND_STATEMENT: {
-			//TODO
+			freeNodeList(((CompoundStatementNode *)node->data)->statements);
 			break;
 		}
 		case NODE_ASSIGNMENT : {
-			//TODO
+			freeNode(((AssignmentNode *)node->data)->left);
+			freeNode(((AssignmentNode *)node->data)->right);
 			break;
 		}
 		case NODE_IF_ELSE : {
-			//TODO
+			freeNode(((IfElseNode *)node->data)->condition);
+			freeNode(((IfElseNode *)node->data)->then);
+			freeNode(((IfElseNode *)node->data)->els);
 			break;
 		}
 		case NODE_WHILE : {
-			//TODO
+			freeNode(((WhileNode *)node->data)->condition);
+			freeNode(((WhileNode *)node->data)->compound);
 			break;
 		}
 		case NODE_FUNCTION : {
-			//TODO
+			freeNode(((FunctionNode *)node->data)->compound);
 			break;
 		}
 		case NODE_PROCEDURE : {
-			//TODO
+			freeNode(((ProcedureNode *)node->data)->compound);
 			break;
 		}
 		case NODE_PROGRAM : {
-			//TODO
+			freeNodeList(((ProgramNode *)node->data)->declarations);
+			freeNode(((ProgramNode *)node->data)->compound);
 			break;
 		}
 		case NODE_DECLARATION : {
-			//TODO
 			break;
 		}
 		case NODE_READLN : {
-			//TODO
+			freeNodeList(((ReadLnNode *)node->data)->factors);
 			break;
 		}
 		case NODE_WRITELN : {
-			//TODO
+			freeNodeList(((WriteLnNode *)node->data)->arguments);
 			break;
 		}
 	}

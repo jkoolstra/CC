@@ -166,10 +166,9 @@ ASTNode *createReadLnNode(NodeList);
 ASTNode *createWriteLnNode(NodeList);
 
 
-/*
-ASTNode *createNode(Type t);
 void freeNode(ASTNode*);
-*/
+void freeNodeList(NodeList);
+
 // Nodelists
 NodeList createEmptyNodeList();
 NodeList createNodeList(ASTNode*);

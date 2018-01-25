@@ -22,12 +22,12 @@ int main(int argc, char **argv){
 	var14 = t8;
 	int t9 = var12;
 	int t10 = var14;
-	float t11 = t9 * t10;
+	int t11 = t9 * t10;
 	var16 = t11;
 	int t12 = 1;
 	int t13 = 1;
 	int t14 = var12;
-	float t15 = t13 * t14;
+	int t15 = t13 * t14;
 	int t16 = t12 * t15;
 	int t17 = 1;
 	int t18 = var16;
