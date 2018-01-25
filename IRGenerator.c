@@ -170,14 +170,16 @@ void generateWhileStatement(FILE* file, ASTNode *given){
 void generateIfStatement(FILE* file, ASTNode *given){
 	IfElseNode *ifElse = (IfElseNode *)given->data;
 	generate(file,ifElse->condition);
-	fprintf(file,"\tif(!t%d) goto lb%d;\n", idx-1, lblIdx);
+	int elseLbl = lblIdx;
+	fprintf(file,"\tif(!t%d) goto lb%d;\n", idx-1, elseLbl);
 	lblIdx++;
 	generate(file, ifElse->then);
-	fprintf(file,"\tgoto lb%d;\n",lblIdx);
-	fprintf(file,"lb%d: ;\n",lblIdx-1);
-	generate(file, ifElse->els);
-	fprintf(file,"lb%d: ;\n",lblIdx);
+	int ifLbl = lblIdx;
+	fprintf(file,"\tgoto lb%d;\n",ifLbl);
 	lblIdx++;
+	fprintf(file,"lb%d: ;\n",elseLbl);
+	generate(file, ifElse->els);
+	fprintf(file,"lb%d: ;\n",ifLbl);
 }
 
 char *operatorString(Operator op){
