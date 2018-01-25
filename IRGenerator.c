@@ -58,23 +58,27 @@ void generateWriteLn(FILE *file, ASTNode *given){
 void generateReadLn(FILE *file, ASTNode *given){
 	ReadLnNode *node = (ReadLnNode *)given->data;
 	for(int i = 0; i < node->factors.n; i++){
+		ASTNode *current = node->factors.nodes[i];
 		unsigned intialIdx = idx;
-		if(determineType(node->factors.nodes[i]).base == TYPE_REAL){
+		if(determineType(current).base == TYPE_REAL){
 			fprintf(file,"\tfloat t%d;\n", idx);
 			fprintf(file,"\tscanf(\"%%f\", &t%d);\n", intialIdx);
 		} else {
 			fprintf(file,"\tint t%d;\n", idx);
 			fprintf(file,"\tscanf(\"%%d\", &t%d);\n", intialIdx);
 		}
-		if(node->factors.nodes[i]->type == NODE_VARIABLE){
-			VariableNode *var = (VariableNode *)node->factors.nodes[i]->data;
+		idx++;
+		if(current->type == NODE_VARIABLE){
+			VariableNode *var = (VariableNode *)current->data;
 			fprintf(file,"\tvar%d = t%d;\n", var->name, intialIdx);
-		} else if(node->factors.nodes[i]->type == NODE_ARRAY_VARIABLE){
-			ArrayVariableNode *var = (ArrayVariableNode *)node->factors.nodes[i]->data;
-			for(int i =0; i < var->indices.n; i++){
-				generate(file, var->indices.nodes[i]);
-				fprintf(file,"\tvar%d[t%d] = t%d;\n", var->name, idx-1, intialIdx);
-			}
+		} else if(current->type == NODE_ARRAY){
+			printf("Now it works\n");
+			ArrayNode *var = (ArrayNode *)current->data;
+			generate(file, var->index);
+			int idxExpr = idx - 1;
+			fprintf(file,"\tint t%d = t%d - %d;//Update idx\n", idx, idxExpr, var->type.low);
+			int idxUpdate = idx;
+			fprintf(file,"\tvar%d[t%d] = t%d;\n", var->name, idxUpdate, intialIdx);
 		}
 		idx++;
 	}
@@ -93,10 +97,14 @@ void generateVariable(FILE* file, ASTNode *given){
 void generateArray(FILE* file, ASTNode *given){
 	ArrayNode *var = (ArrayNode *)given->data;
 	generate(file, var->index);
+	int idxExpr = idx - 1;
+	fprintf(file,"\tint t%d = t%d - %d;//Update idx\n", idx, idxExpr, var->type.low);
+	int idxUpdate = idx;
+	idx++;
 	if(determineType(given).base == TYPE_REAL){
-		fprintf(file,"\tfloat t%d = var%d[t%d];\n", idx, var->name, idx-1);
+		fprintf(file,"\tfloat t%d = var%d[t%d];\n", idx, var->name, idxUpdate);
 	} else {
-		fprintf(file,"\tint t%d = var%d[t%d];\n", idx, var->name, idx-1);
+		fprintf(file,"\tint t%d = var%d[t%d];\n", idx, var->name, idxUpdate);
 	}
 	idx++;
 }
@@ -143,7 +151,10 @@ void generateAssignment(FILE* file, ASTNode *given){
 		ArrayVariableNode *var = (ArrayVariableNode *)assignment->left->data;
 		for(int i =0; i < var->indices.n; i++){
 			generate(file, var->indices.nodes[i]);
-			fprintf(file,"\tvar%d[t%d] = t%d;\n", var->name, idx-1, idxRight);
+			int idxExpr = idx - 1;
+			fprintf(file,"\tint t%d = t%d - %d;//Update idx\n", idx, idxExpr, var->type.low);
+			fprintf(file,"\tvar%d[t%d] = t%d;\n", var->name, idx, idxRight);
+			idx++;
 		}
 	}
 }
@@ -204,7 +215,7 @@ void generate(FILE* file, ASTNode *node){
 		case NODE_IVALUE:if(PRINT){printf("//NODE_IVALUE\n");} generateIValue(file, node); break;//TODO
 		case NODE_RVALUE: if(PRINT){printf("//NODE_RVALUE\n");} generateRValue(file, node); break;//TODO
 		case NODE_VARIABLE: if(PRINT){printf("//NODE_VARIABLE\n");} generateVariable(file, node); break;//TODO
-		case NODE_ARRAY_VARIABLE : if(PRINT){printf("//NODE_ARRAY_VARIABLE\n");} // This node can only appear on the right side of a assignment
+		case NODE_ARRAY_VARIABLE : if(PRINT){printf("//NODE_ARRAY_VARIABLE\n");} // This node can only appear on the left side of a assignment
 		case NODE_ARRAY: if(PRINT){printf("//NODE_ARRAY\n");} generateArray(file, node); break;//TODO
 		case NODE_EXPRESSION: if(PRINT){printf("//NODE_EXPRESSION\n");} generateExpression(file, node); break;//TODO
 		case NODE_FUNCTION_CALL: if(PRINT){printf("//NODE_FUNCTION_CALL\n");} break;//TODO

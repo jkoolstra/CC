@@ -268,7 +268,7 @@ Type determineExpressionType(ASTNode *initial){
     	case OP_RELOP_SMEQ :
     	case OP_RELOP_NOEQ :
     	case OP_RELOP_EQ : return makeType(TYPE_BOOL, TYPE_SCALAR, 0, 0);
-		case OP_I_MULOP_D : 
+		case OP_I_MULOP_D :
       	case OP_I_MULOP_M : return makeType(TYPE_INTEGER, TYPE_SCALAR ,0, 0);
   		case OP_R_MULOP_D :
       	case OP_R_MULOP_M : return makeType(TYPE_REAL, TYPE_SCALAR, 0, 0);
