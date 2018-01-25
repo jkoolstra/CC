@@ -95,10 +95,23 @@ end                 { if(PRINT){printf("%s", yytext);} if(LINES){printf("\n");} 
 
 %%
 
+void initLexer(char *filename) {
+  yyin = fopen(filename, "r");
+
+  if (yyin == NULL) {
+    fprintf(stderr, "Error: failed to open input file\n");
+    exit(EXIT_FAILURE);
+  }
+}
+
 void makeIdentifier(){
     unsigned index = appendToStringTable(&strTab, yytext);
 
     yylval.indexList.indices = safeMalloc(sizeof(unsigned));
     yylval.indexList.indices[0] = index;
     yylval.indexList.numberOfIndices = 1;
+}
+
+void finalizeLexer() {
+  yylex_destroy();
 }

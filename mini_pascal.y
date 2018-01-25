@@ -280,11 +280,13 @@ Expression      : Simple_expression                           		{	printf("EXPRES
 Simple_expression   : Term                          {
                                                         $$ = $1;
                                                     }
-                    | ADDOP_MIN Term                {
-                                                        $$ = $2;		// TODO: Not ignore the addop
+                    | ADDOP_MIN Term                { 	// + x  == ( 1 * x )
+														ASTNode *plus = createIValueNode(1);
+                                                        $$ = createExpressionNode(plus, $2, OP_I_MULOP_M);
                                                     }
-                    | ADDOP_ADD Term                {
-                                                        $$ = $2;		// TODO: Not ignore the addop
+                    | ADDOP_ADD Term                {   // - x  == ( -1 * x
+														ASTNode *minus = createIValueNode(-1);
+                                                        $$ = createExpressionNode(minus, $2, OP_I_MULOP_M);
                                                     }
                     | Simple_expression ADDOP_MIN Term  {
                                                         	checkTypes($1, $3, OP_ADDOP_MIN);
@@ -616,20 +618,25 @@ void warningMessage(char *msg){
 
 // ------------- MAIN --------------------------
 int main(int argc, char **argv) {
-	char *name = "code.c";
-	FILE *fp=fopen(name, "w");
-	if(fp == NULL){
-		errorMessage("File not opened");
+	if (argc != 2) {
+	    fprintf(stderr, "Usage: %s <input> <output>\n", argv[0]);
+	    return EXIT_FAILURE;
+  	}
+  	initLexer(argv[1]);
+
+	FILE *output=fopen(argv[2], "w");
+	if(output == NULL){
+		fprintf(stderr, "Error: failed to open output file\n");
 	}
-	//fclose(fp);
+
     //yydebug = 1;
     strTab = newStringTable(0);
     stack = initSymbolStack(&strTab);
     yyparse();
-    printf("\x1B[32m" "ACCEPTED\n" "\x1B[0m");
-	generateIR(fp, programNode);
-	fclose(fp);
+	generateIR(output, programNode);
+	fclose(output);
     //freeSymbolStack(&stack);
     //freeStringTable(strTab);
+	finalizeLexer();
     return 0;
 }
