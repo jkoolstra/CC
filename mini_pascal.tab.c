@@ -2516,8 +2516,8 @@ int main(int argc, char **argv) {
     yyparse();
 	generateIR(output, programNode);
 	fclose(output);
-    //freeSymbolStack(&stack);
-    //freeStringTable(strTab);
+    freeSymbolStack(&stack);
+    freeStringTable(strTab);
 	freeNode(programNode);
 	finalizeLexer();
     return 0;
