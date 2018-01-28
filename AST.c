@@ -6,7 +6,7 @@
 #include "IRGenerator.h"
 
 ASTNode *createEmptyNode(NodeType type){
-	ASTNode *node = safeMalloc(sizeof(IValueNode));
+	ASTNode *node = safeMalloc(sizeof(ASTNode));
 	node->type = type;
 
 	return node;

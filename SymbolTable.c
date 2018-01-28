@@ -23,7 +23,7 @@ void freeSymbolTable(SymbolTable* table) {
     while (table->hashtab[i] != NULL) {
       bucket b = table->hashtab[i];
       table->hashtab[i] = table->hashtab[i]->next;
-      free(b->data);
+      freeIdEntry(b->data);
       free(b);
     }
   }

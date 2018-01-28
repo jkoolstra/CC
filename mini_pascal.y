@@ -215,7 +215,7 @@ Variable        : ID                          {
 												  checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
 												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
-												  $$ = createVariableNode($1.indices[0], *data->type);
+												  $$ = createVariableNode($1.indices[0], data->type);
                                               }
                 | ID '[' Expression_list ']'  {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
@@ -224,7 +224,7 @@ Variable        : ID                          {
 												  checkIfMultipleArrayIndicesAreAllIntegers($3);
 												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
-												  $$ = createArrayVariableNode($1.indices[0], *data->type, $3);
+												  $$ = createArrayVariableNode($1.indices[0], data->type, $3);
                                               }
 
 Procedure_statement : ID                        {
@@ -323,7 +323,7 @@ Factor          : Variable_factor				{ $$ = $1; }
 													checkParameterCountAndTypes($1.indices[0], $3, TYPE_FUNCTION);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
-													$$ = createFunctionCallNode($1.indices[0], *data->returnType, $3);
+													$$ = createFunctionCallNode($1.indices[0], data->returnType, $3);
 												}
                 | INUM                          {
 													$$ = createIValueNode($1);
@@ -349,7 +349,7 @@ Variable_factor : ID                            {
                                                     checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = createVariableNode($1.indices[0], *data->type);
+                                                    $$ = createVariableNode($1.indices[0], data->type);
                 								}
 				| ID '[' Simple_expression ']'  {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
@@ -358,7 +358,7 @@ Variable_factor : ID                            {
 													checkIfArrayIndexIsInteger($3);
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = createArrayNode($1.indices[0], *data->type, $3);
+                                                    $$ = createArrayNode($1.indices[0], data->type, $3);
                                                 }
 
 %%
@@ -396,9 +396,9 @@ void checkParameterCountAndTypes(unsigned id, NodeList arguments, IdType type){
 		entry = findShadowedFunctionOrProcedure(&stack, id);
 
 	if(type ==  TYPE_FUNCTION)
-		params = *((FunctionData *)entry->data)->parameters;
+		params = ((FunctionData *)entry->data)->parameters;
 	else
-		params = *((ProcedureData *)entry->data)->parameters;
+		params = ((ProcedureData *)entry->data)->parameters;
 
 	if(params.numberOfParameters != arguments.n){
 		char *err;
@@ -409,18 +409,18 @@ void checkParameterCountAndTypes(unsigned id, NodeList arguments, IdType type){
 	for(int i = 0; i < params.numberOfParameters; i++){
 		ASTNode *argument = arguments.nodes[i];
 		Type argumentType = determineType(argument);
-		if(params.parameters[i]->type->secondary != argumentType.secondary){
+		if(params.parameters[i]->type.secondary != argumentType.secondary){
 			char *err;
 			asprintf(&err, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
-																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
+																						baseTypeString(params.parameters[i]->type.base), secondaryTypeString(params.parameters[i]->type.secondary),
 																						baseTypeString(argumentType.base), secondaryTypeString(argumentType.secondary)
 																				);
 			errorMessage(err);
 		}
-		if(params.parameters[i]->type->base != argumentType.base){
+		if(params.parameters[i]->type.base != argumentType.base){
 			char *war;
 			asprintf(&war, "parameter %s of %s is of type %s %s but received %s %s",	retrieveFromStringTable(*(stack.strTab), params.parameters[i]->strtabIndex), retrieveFromStringTable(*(stack.strTab), id),
-																						baseTypeString(params.parameters[i]->type->base), secondaryTypeString(params.parameters[i]->type->secondary),
+																						baseTypeString(params.parameters[i]->type.base), secondaryTypeString(params.parameters[i]->type.secondary),
 																						baseTypeString(argumentType.base), secondaryTypeString(argumentType.secondary)
 																				);
 			warningMessage(war);
@@ -490,9 +490,9 @@ void checkTypes(ASTNode *node1, ASTNode *node2, Operator operator){
 void checkIdentifierSecondaryType(unsigned index, SecondaryType t){
   IdEntry *entry = lookupSymbol(&stack, index);
   VariableData *data = (VariableData *)entry->data;
-  if(data->type->secondary != t){
+  if(data->type.secondary != t){
     char *err;
-    asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), secondaryTypeString(data->type->secondary), secondaryTypeString(t));
+    asprintf(&err, "variable %s is %s and not %s", retrieveFromStringTable(*(stack.strTab), index), secondaryTypeString(data->type.secondary), secondaryTypeString(t));
     errorMessage(err);
   }
 }
@@ -536,8 +536,7 @@ void declareVariable(StrtabIndexList indentifiers, Type type){
     for(int i = indentifiers.numberOfIndices-1 ; i >= 0 ; i--){
         VariableData *data = safeMalloc(sizeof(VariableData *));
 
-		data->type = safeMalloc(sizeof(Type));
-		memcpy(data->type, &type, sizeof(Type));
+		data->type = type;
 
         IdEntry newEntry = makeIdEntry(indentifiers.indices[i]);
         newEntry.data = data;
@@ -550,11 +549,9 @@ void declareVariable(StrtabIndexList indentifiers, Type type){
 void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList parameters){
     FunctionData data;
 
-	data.returnType = safeMalloc(sizeof(Type));
-	memcpy(data.returnType, &type, sizeof(Type));
+	data.returnType = type;
 
-	data.parameters = safeMalloc(sizeof(ParameterList));
-	memcpy(data.parameters, &parameters, sizeof(ParameterList));
+	data.parameters = parameters;
 
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = safeMalloc(sizeof(FunctionData));
@@ -566,8 +563,7 @@ void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList para
 
 void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
     ProcedureData *data = safeMalloc(sizeof(ProcedureData *));
-	data->parameters = safeMalloc(sizeof(ParameterList));
-	memcpy(data->parameters, &parameters, sizeof(ParameterList));
+	data->parameters = parameters;
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
     newEntry.idType = TYPE_PROCEDURE;
@@ -589,8 +585,7 @@ void declareParametersLocallyAsVariables(ParameterList list){
 
 void declareFunctionLocallyAsVariable(StrtabIndexList indentifiers, Type type){
     VariableData *data = safeMalloc(sizeof(VariableData *));
-	data->type = safeMalloc(sizeof(Type));
-	memcpy(data->type, &type, sizeof(Type));
+	data->type = type;
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
     newEntry.idType = TYPE_VARIABLE;

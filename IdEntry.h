@@ -31,38 +31,38 @@ typedef struct type {
 	unsigned high;
 } Type;
 
-typedef struct typeList {
-	unsigned numberOfTypes;
-	Type **types;
-}	TypeList;
-
-typedef struct variableData {
-	Type *type;
-} VariableData;
-
 typedef struct parameterData {
 	unsigned strtabIndex;
-	Type *type;
+	Type type;
 } ParameterData;
+
+typedef struct strtabIndexList {
+    unsigned numberOfIndices;
+	unsigned *indices;
+} StrtabIndexList;
 
 typedef struct parameterList {
     unsigned numberOfParameters;
 	ParameterData **parameters;
 } ParameterList;
 
+typedef struct typeList {
+	unsigned numberOfTypes;
+	Type *types;
+}	TypeList;
+
+typedef struct variableData {
+	Type type;
+} VariableData;
+
 typedef struct functionData {
-	Type *returnType;
-	ParameterList *parameters;
+	Type returnType;
+	ParameterList parameters;
 } FunctionData;
 
 typedef struct ProcedureData {
-	ParameterList *parameters;
+	ParameterList parameters;
 } ProcedureData;
-
-typedef struct strtabIndexList {
-    unsigned numberOfIndices;
-	unsigned *indices;
-} StrtabIndexList;
 
 typedef struct idEntry{
 	unsigned strtabIndex;
@@ -78,6 +78,7 @@ char *baseTypeString(BaseType type);
 
 //INITIALIZING
 IdEntry makeIdEntry(unsigned);
+void freeIdEntry(IdEntry*);
 Type makeType(BaseType, SecondaryType, unsigned, unsigned);
 ParameterList createParameterList(StrtabIndexList list, Type t);
 TypeList createTypeList(Type t);
