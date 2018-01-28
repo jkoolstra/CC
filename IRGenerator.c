@@ -5,7 +5,7 @@
 #include "AST.h"
 #include "IRGenerator.h"
 
-#define PRINT 0
+#define PRINT 1
 
 int idx;
 int lblIdx;
@@ -13,12 +13,15 @@ void generate(FILE*, ASTNode*);
 char *operatorString(Operator op);
 
 void generateProgram(FILE* file, ASTNode *node){
+	printf("Generating program \n");
 	fprintf(file,"#include <stdio.h>\n");
 	fprintf(file,"#include <stdlib.h>\n");
 	fprintf(file,"int main(int argc, char **argv){\n");
 	idx = 0;
 	lblIdx = 0;
 	ProgramNode *program = (ProgramNode *)node->data;
+
+	printf("Number of declarations : %d\n", program->declarations.n);
 	for(int i = 0; i < program->declarations.n; i++){
 		generate(file, program->declarations.nodes[i]);
 	}

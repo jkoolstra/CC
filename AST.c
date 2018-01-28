@@ -217,6 +217,7 @@ ASTNode *createWriteLnNode(NodeList arguments){
 // Node list
 NodeList createEmptyNodeList(){
     NodeList list;
+	list.nodes = safeMalloc(0);
 	list.n = 0;
 
 	return list;
@@ -224,10 +225,39 @@ NodeList createEmptyNodeList(){
 NodeList createNodeList(ASTNode *node){
     NodeList list;
 	list.n = 1;
-	list.nodes = safeMalloc(sizeof(ASTNode *));
+	list.nodes = safeMalloc(sizeof(ASTNode));
 	list.nodes[0] = node;
 
 	return list;
+}
+
+void appendToNodeLists(NodeList* combined, ASTNode *node){
+	// TODO : Free lists
+	int newSize = combined->n + 1;
+	safeRealloc(combined->nodes, newSize * sizeof(ASTNode));
+	//memcpy(combined->nodes[newSize-1], node, sizeof(ASTNode));
+	combined->nodes[newSize-1] = node;
+	combined->n = newSize;
+
+	/*
+	NodeList combinedList;
+	combinedList.n = listOne.n + listTwo.n;
+	combinedList.nodes = safeMalloc(combinedList.n * sizeof(ASTNode));
+	int i;
+	int j;
+	for(i = 0 ; i < listOne.n; i++){
+		ASTNode *newNode = listOne.nodes[i];
+		*combinedList.nodes[i] = *listOne.nodes[i];
+	}
+	for(j = 0 ; j < listTwo.n; j++, i++){
+		*combinedList.nodes[i] = *listTwo.nodes[j];
+	}
+	printf("Freeing NodeLIst 2  ->  %d \n", listTwo.n);
+	freeNodeList(listTwo);
+	printf("Freeing NodeLIst 1  ->  %d \n", listOne.n);
+	freeNodeList(listOne);
+	printf("Freed NodeLIst\n");
+	return combinedList;*/
 }
 
 NodeList combineNodeLists(NodeList listOne, NodeList listTwo){
@@ -237,12 +267,18 @@ NodeList combineNodeLists(NodeList listOne, NodeList listTwo){
 	combinedList.nodes = safeMalloc(combinedList.n * sizeof(ASTNode));
 	int i;
 	int j;
-	for(i =0 ; i < listOne.n; i++){
-		combinedList.nodes[i] = listOne.nodes[i];
+	for(i = 0 ; i < listOne.n; i++){
+		ASTNode *newNode = listOne.nodes[i];
+		*combinedList.nodes[i] = *listOne.nodes[i];
 	}
-	for(j =0 ; j < listTwo.n; j++){
-		combinedList.nodes[j+i] = listTwo.nodes[j];
+	for(j = 0 ; j < listTwo.n; j++, i++){
+		*combinedList.nodes[i] = *listTwo.nodes[j];
 	}
+	printf("Freeing NodeLIst 2  ->  %d \n", listTwo.n);
+	freeNodeList(listTwo);
+	printf("Freeing NodeLIst 1  ->  %d \n", listOne.n);
+	freeNodeList(listOne);
+	printf("Freed NodeLIst\n");
 	return combinedList;
 }
 

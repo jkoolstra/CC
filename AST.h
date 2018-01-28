@@ -172,7 +172,7 @@ void freeNodeList(NodeList);
 // Nodelists
 NodeList createEmptyNodeList();
 NodeList createNodeList(ASTNode*);
-void appendToNodeLists(NodeList*, ASTNode*);
+void appendToNodeLists(NodeList* combined, ASTNode *node);
 NodeList combineNodeLists(NodeList, NodeList);
 
 

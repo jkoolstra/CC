@@ -9,8 +9,8 @@
     #include "IdEntry.h"
     #include "common.h"
 
-	#define PRINT 0
-	#define INDENT 0
+	#define PRINT 1
+	#define INDENT 1
 	#define LINES 0
 
 int lineno = 1;

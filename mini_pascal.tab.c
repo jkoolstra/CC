@@ -155,6 +155,7 @@
     #include "SymbolStack.h"
     #include "common.h"
 
+	#include "IRGenerator.h"
     // CHECKING
 	void checkCondition(ASTNode*);
 	void checkAssignment(ASTNode*, ASTNode*);
@@ -202,7 +203,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 41 "mini_pascal.y"
+#line 42 "mini_pascal.y"
 {
 	int iValue;
 	float rValue;
@@ -215,7 +216,7 @@ typedef union YYSTYPE
     TypeList typeList;
 }
 /* Line 193 of yacc.c.  */
-#line 219 "mini_pascal.tab.c"
+#line 220 "mini_pascal.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -228,7 +229,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 232 "mini_pascal.tab.c"
+#line 233 "mini_pascal.tab.c"
 
 #ifdef short
 # undef short
@@ -542,13 +543,13 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    80,    80,    90,    91,    95,   105,   110,   113,   117,
-     120,   124,   125,   127,   133,   142,   151,   154,   160,   163,
-     170,   174,   175,   177,   181,   186,   190,   193,   196,   200,
-     204,   207,   211,   219,   229,   234,   241,   245,   250,   253,
-     257,   261,   265,   269,   273,   278,   281,   285,   289,   293,
-     298,   301,   305,   309,   313,   318,   319,   327,   330,   333,
-     337,   341,   346,   353
+       0,    81,    81,    94,    95,    99,   115,   120,   123,   127,
+     130,   134,   135,   137,   143,   152,   161,   164,   170,   173,
+     180,   184,   185,   187,   192,   199,   203,   206,   209,   213,
+     217,   220,   224,   232,   242,   247,   254,   258,   264,   267,
+     271,   275,   279,   283,   287,   292,   295,   299,   303,   307,
+     312,   315,   319,   323,   327,   332,   333,   341,   344,   347,
+     351,   355,   361,   368
 };
 #endif
 
@@ -1546,82 +1547,91 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 86 "mini_pascal.y"
+#line 87 "mini_pascal.y"
     {
+												printf("Creating program nod\n");
 												programNode = createProgramNode((yyvsp[(2) - (10)].indexList).indices[0], (yyvsp[(7) - (10)].nodeList), (yyvsp[(9) - (10)].node));
+												generateProgram(stdout, programNode);
+												printf("Creating program nod\n");
 											;}
     break;
 
   case 3:
-#line 90 "mini_pascal.y"
+#line 94 "mini_pascal.y"
     { (yyval.indexList) = (yyvsp[(1) - (1)].indexList); ;}
     break;
 
   case 4:
-#line 91 "mini_pascal.y"
+#line 95 "mini_pascal.y"
     {
                                                 (yyval.indexList) = combineIdentifiers((yyvsp[(1) - (3)].indexList), (yyvsp[(3) - (3)].indexList));
                                             ;}
     break;
 
   case 5:
-#line 95 "mini_pascal.y"
+#line 99 "mini_pascal.y"
     {
                                                                     declareVariable((yyvsp[(3) - (6)].indexList), (yyvsp[(5) - (6)].type));
 																	NodeList combined = (yyvsp[(1) - (6)].nodeList);
+
+																	printf("Starting combining : %d \n", (yyvsp[(3) - (6)].indexList).numberOfIndices);
 																	for(int i = 0; i < (yyvsp[(3) - (6)].indexList).numberOfIndices ; i++){
+																		printf("Dexlarations\n");
 																		ASTNode *declaration = createDeclarationNode((yyvsp[(3) - (6)].indexList).indices[i], (yyvsp[(5) - (6)].type));
-																		NodeList declarations = createNodeList(declaration);
-																		combined = combineNodeLists(combined, declarations);
+																		generateDeclarations(stdout, declaration);
+																		//NodeList declarations = createNodeList(declaration);
+																		//combined = combineNodeLists(combined, declarations);
+																		appendToNodeLists(&combined, declaration);
 																	}
 																	(yyval.nodeList) = combined;
+																	printf("Combine size -> %d \n", combined.n);
                                                                 ;}
     break;
 
   case 6:
-#line 105 "mini_pascal.y"
+#line 115 "mini_pascal.y"
     {
 																	(yyval.nodeList) = createEmptyNodeList();
 																;}
     break;
 
   case 7:
-#line 110 "mini_pascal.y"
+#line 120 "mini_pascal.y"
     {
                                     (yyval.type) = makeType((yyvsp[(1) - (1)].type).base, TYPE_SCALAR, 0, 0);
                                 ;}
     break;
 
   case 8:
-#line 113 "mini_pascal.y"
+#line 123 "mini_pascal.y"
     {
                                                                         (yyval.type) = makeType((yyvsp[(9) - (9)].type).base, TYPE_ARRAY, (yyvsp[(3) - (9)].iValue), (yyvsp[(6) - (9)].iValue));
                                                                     ;}
     break;
 
   case 9:
-#line 117 "mini_pascal.y"
+#line 127 "mini_pascal.y"
     {
                                 (yyval.type).base = TYPE_INTEGER ;
                             ;}
     break;
 
   case 10:
-#line 120 "mini_pascal.y"
+#line 130 "mini_pascal.y"
     {
                                 (yyval.type).base = TYPE_REAL ;
                             ;}
     break;
 
   case 13:
-#line 129 "mini_pascal.y"
+#line 139 "mini_pascal.y"
     {
                                                     outdent(&stack);
                                                 ;}
     break;
 
   case 14:
-#line 135 "mini_pascal.y"
+#line 145 "mini_pascal.y"
     {
                                                             declareFunction((yyvsp[(2) - (6)].indexList), (yyvsp[(5) - (6)].type), (yyvsp[(3) - (6)].parameterList));
                                                             indent(&stack);
@@ -1632,7 +1642,7 @@ yyreduce:
     break;
 
   case 15:
-#line 144 "mini_pascal.y"
+#line 154 "mini_pascal.y"
     {
                                         declareProcedure((yyvsp[(2) - (4)].indexList), (yyvsp[(3) - (4)].parameterList));
                                         indent(&stack);
@@ -1642,14 +1652,14 @@ yyreduce:
     break;
 
   case 16:
-#line 151 "mini_pascal.y"
+#line 161 "mini_pascal.y"
     {
                                                 (yyval.parameterList) = (yyvsp[(2) - (3)].parameterList);
                                             ;}
     break;
 
   case 17:
-#line 154 "mini_pascal.y"
+#line 164 "mini_pascal.y"
     {
                                                 ParameterList list;
                                                 list.numberOfParameters = 0;
@@ -1658,14 +1668,14 @@ yyreduce:
     break;
 
   case 18:
-#line 160 "mini_pascal.y"
+#line 170 "mini_pascal.y"
     {
                                                 (yyval.parameterList) = createParameterList((yyvsp[(1) - (3)].indexList), (yyvsp[(3) - (3)].type));
                                             ;}
     break;
 
   case 19:
-#line 163 "mini_pascal.y"
+#line 173 "mini_pascal.y"
     {
 																	ParameterList l = createParameterList((yyvsp[(3) - (5)].indexList), (yyvsp[(5) - (5)].type));
 																	(yyval.parameterList) = combineParameterLists((yyvsp[(1) - (5)].parameterList), l);
@@ -1673,38 +1683,41 @@ yyreduce:
     break;
 
   case 20:
-#line 172 "mini_pascal.y"
+#line 182 "mini_pascal.y"
     { (yyval.node) = createCompoundStatementNode((yyvsp[(2) - (3)].nodeList));;}
     break;
 
   case 21:
-#line 174 "mini_pascal.y"
+#line 184 "mini_pascal.y"
     { (yyval.nodeList) = (yyvsp[(1) - (1)].nodeList);;}
     break;
 
   case 22:
-#line 175 "mini_pascal.y"
+#line 185 "mini_pascal.y"
     { (yyval.nodeList) = createEmptyNodeList();;}
     break;
 
   case 23:
-#line 177 "mini_pascal.y"
+#line 187 "mini_pascal.y"
     {
+														printf("First Statement\n");
 														NodeList list = createNodeList((yyvsp[(1) - (1)].node));
 														(yyval.nodeList) = list;
 													;}
     break;
 
   case 24:
-#line 181 "mini_pascal.y"
+#line 192 "mini_pascal.y"
     {
-														NodeList list = combineNodeLists((yyvsp[(1) - (3)].nodeList), createNodeList((yyvsp[(3) - (3)].node)));
-														(yyval.nodeList) = list;
+																		printf("Following Statement\n");
+														appendToNodeLists(&(yyvsp[(1) - (3)].nodeList), (yyvsp[(3) - (3)].node));
+														//NodeList list = combineNodeLists($1, createNodeList($3));
+														(yyval.nodeList) = (yyvsp[(1) - (3)].nodeList);
 													;}
     break;
 
   case 25:
-#line 186 "mini_pascal.y"
+#line 199 "mini_pascal.y"
     {
 	 												checkAssignment((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node));
 													(yyval.node) = createAssignmentNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node));
@@ -1712,21 +1725,21 @@ yyreduce:
     break;
 
   case 26:
-#line 190 "mini_pascal.y"
+#line 203 "mini_pascal.y"
     {
 																	(yyval.node) = (yyvsp[(1) - (1)].node);
 																;}
     break;
 
   case 27:
-#line 193 "mini_pascal.y"
+#line 206 "mini_pascal.y"
     {
 																	(yyval.node) = (yyvsp[(1) - (1)].node);
 																;}
     break;
 
   case 28:
-#line 196 "mini_pascal.y"
+#line 209 "mini_pascal.y"
     {
 																	checkCondition((yyvsp[(2) - (6)].node));
 																	(yyval.node) = createIfElseNode((yyvsp[(2) - (6)].node), (yyvsp[(4) - (6)].node), (yyvsp[(6) - (6)].node));
@@ -1734,7 +1747,7 @@ yyreduce:
     break;
 
   case 29:
-#line 200 "mini_pascal.y"
+#line 213 "mini_pascal.y"
     {
 																	checkCondition((yyvsp[(2) - (4)].node));
 																	(yyval.node) = createWhileNode((yyvsp[(2) - (4)].node), (yyvsp[(4) - (4)].node));
@@ -1742,21 +1755,21 @@ yyreduce:
     break;
 
   case 30:
-#line 204 "mini_pascal.y"
+#line 217 "mini_pascal.y"
     {
 																	(yyval.node) = createReadLnNode((yyvsp[(3) - (4)].nodeList));
 																;}
     break;
 
   case 31:
-#line 207 "mini_pascal.y"
+#line 220 "mini_pascal.y"
     {
 																	(yyval.node) = createWriteLnNode((yyvsp[(3) - (4)].nodeList));
 																;}
     break;
 
   case 32:
-#line 211 "mini_pascal.y"
+#line 224 "mini_pascal.y"
     {
                                                   checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
                                                   checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
@@ -1768,7 +1781,7 @@ yyreduce:
     break;
 
   case 33:
-#line 219 "mini_pascal.y"
+#line 232 "mini_pascal.y"
     {
                                                   checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
                                                   checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
@@ -1781,7 +1794,7 @@ yyreduce:
     break;
 
   case 34:
-#line 229 "mini_pascal.y"
+#line 242 "mini_pascal.y"
     {
 													checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
 													checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_PROCEDURE);
@@ -1790,7 +1803,7 @@ yyreduce:
     break;
 
   case 35:
-#line 234 "mini_pascal.y"
+#line 247 "mini_pascal.y"
     {
 														checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
 														checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_PROCEDURE);
@@ -1800,7 +1813,7 @@ yyreduce:
     break;
 
   case 36:
-#line 241 "mini_pascal.y"
+#line 254 "mini_pascal.y"
     {
 														NodeList list = createNodeList((yyvsp[(1) - (1)].node));
 														(yyval.nodeList) = list;
@@ -1808,22 +1821,23 @@ yyreduce:
     break;
 
   case 37:
-#line 245 "mini_pascal.y"
+#line 258 "mini_pascal.y"
     {
-														NodeList list = combineNodeLists((yyvsp[(1) - (3)].nodeList), createNodeList((yyvsp[(3) - (3)].node)));
-														(yyval.nodeList) = list;
+														appendToNodeLists(&(yyvsp[(1) - (3)].nodeList), (yyvsp[(3) - (3)].node));
+														//NodeList list = combineNodeLists($1, createNodeList($3));
+														(yyval.nodeList) = (yyvsp[(1) - (3)].nodeList);
 													;}
     break;
 
   case 38:
-#line 250 "mini_pascal.y"
+#line 264 "mini_pascal.y"
     {
                                                                   		(yyval.node) = (yyvsp[(1) - (1)].node);
                                                               		;}
     break;
 
   case 39:
-#line 253 "mini_pascal.y"
+#line 267 "mini_pascal.y"
     {
 																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_GR);
 																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_GR);
@@ -1831,7 +1845,7 @@ yyreduce:
     break;
 
   case 40:
-#line 257 "mini_pascal.y"
+#line 271 "mini_pascal.y"
     {
 																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_GREQ);
 																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_GREQ);
@@ -1839,7 +1853,7 @@ yyreduce:
     break;
 
   case 41:
-#line 261 "mini_pascal.y"
+#line 275 "mini_pascal.y"
     {
 																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_SM);
 																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_SM);
@@ -1847,7 +1861,7 @@ yyreduce:
     break;
 
   case 42:
-#line 265 "mini_pascal.y"
+#line 279 "mini_pascal.y"
     {
 																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_SMEQ);
 																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_SMEQ);
@@ -1855,7 +1869,7 @@ yyreduce:
     break;
 
   case 43:
-#line 269 "mini_pascal.y"
+#line 283 "mini_pascal.y"
     {
 																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_NOEQ);
 																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_NOEQ);
@@ -1863,7 +1877,7 @@ yyreduce:
     break;
 
   case 44:
-#line 273 "mini_pascal.y"
+#line 287 "mini_pascal.y"
     {
 																		checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_EQ);
 																		(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_RELOP_EQ);
@@ -1871,14 +1885,14 @@ yyreduce:
     break;
 
   case 45:
-#line 278 "mini_pascal.y"
+#line 292 "mini_pascal.y"
     {
                                                         (yyval.node) = (yyvsp[(1) - (1)].node);
                                                     ;}
     break;
 
   case 46:
-#line 281 "mini_pascal.y"
+#line 295 "mini_pascal.y"
     { 	// + x  == ( 1 * x )
 														ASTNode *plus = createIValueNode(1);
                                                         (yyval.node) = createExpressionNode(plus, (yyvsp[(2) - (2)].node), OP_I_MULOP_M);
@@ -1886,15 +1900,15 @@ yyreduce:
     break;
 
   case 47:
-#line 285 "mini_pascal.y"
-    {   // - x  == ( -1 * x
+#line 299 "mini_pascal.y"
+    {   // - x  == ( -1 ) * x
 														ASTNode *minus = createIValueNode(-1);
                                                         (yyval.node) = createExpressionNode(minus, (yyvsp[(2) - (2)].node), OP_I_MULOP_M);
                                                     ;}
     break;
 
   case 48:
-#line 289 "mini_pascal.y"
+#line 303 "mini_pascal.y"
     {
                                                         	checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_ADDOP_MIN);
 															(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_ADDOP_MIN);
@@ -1902,7 +1916,7 @@ yyreduce:
     break;
 
   case 49:
-#line 293 "mini_pascal.y"
+#line 307 "mini_pascal.y"
     {
                                                         	checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_ADDOP_ADD);
 															(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_ADDOP_ADD);
@@ -1910,14 +1924,14 @@ yyreduce:
     break;
 
   case 50:
-#line 298 "mini_pascal.y"
+#line 312 "mini_pascal.y"
     {
                                                     (yyval.node) = (yyvsp[(1) - (1)].node);
                                                 ;}
     break;
 
   case 51:
-#line 301 "mini_pascal.y"
+#line 315 "mini_pascal.y"
     {
 													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_R_MULOP_D);
 													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_R_MULOP_D);
@@ -1925,7 +1939,7 @@ yyreduce:
     break;
 
   case 52:
-#line 305 "mini_pascal.y"
+#line 319 "mini_pascal.y"
     {
 													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_R_MULOP_M);
 													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_R_MULOP_M);
@@ -1933,7 +1947,7 @@ yyreduce:
     break;
 
   case 53:
-#line 309 "mini_pascal.y"
+#line 323 "mini_pascal.y"
     {
 													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_I_MULOP_D);
 													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_I_MULOP_D);
@@ -1941,7 +1955,7 @@ yyreduce:
     break;
 
   case 54:
-#line 313 "mini_pascal.y"
+#line 327 "mini_pascal.y"
     {
 													checkTypes((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_I_MULOP_M);
 													(yyval.node) = createExpressionNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), OP_I_MULOP_M);
@@ -1949,12 +1963,12 @@ yyreduce:
     break;
 
   case 55:
-#line 318 "mini_pascal.y"
+#line 332 "mini_pascal.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 56:
-#line 319 "mini_pascal.y"
+#line 333 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
                                                     checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_FUNCTION);
@@ -1966,28 +1980,28 @@ yyreduce:
     break;
 
   case 57:
-#line 327 "mini_pascal.y"
+#line 341 "mini_pascal.y"
     {
 													(yyval.node) = createIValueNode((yyvsp[(1) - (1)].iValue));
                                                 ;}
     break;
 
   case 58:
-#line 330 "mini_pascal.y"
+#line 344 "mini_pascal.y"
     {
                                                     (yyval.node) = createRValueNode((yyvsp[(1) - (1)].rValue));
                                                 ;}
     break;
 
   case 59:
-#line 333 "mini_pascal.y"
+#line 347 "mini_pascal.y"
     {
                                                     (yyval.node) = (yyvsp[(2) - (3)].node);
                                                 ;}
     break;
 
   case 60:
-#line 337 "mini_pascal.y"
+#line 351 "mini_pascal.y"
     {
 																		NodeList list = createNodeList((yyvsp[(1) - (1)].node));
 																		(yyval.nodeList) = list;
@@ -1995,15 +2009,16 @@ yyreduce:
     break;
 
   case 61:
-#line 341 "mini_pascal.y"
+#line 355 "mini_pascal.y"
     {
-																		NodeList list = combineNodeLists((yyvsp[(1) - (3)].nodeList), createNodeList((yyvsp[(3) - (3)].node)));
-																		(yyval.nodeList) = list;
+																		appendToNodeLists(&(yyvsp[(1) - (3)].nodeList), (yyvsp[(3) - (3)].node));
+																		//NodeList list = combineNodeLists($1, createNodeList($3));
+																		(yyval.nodeList) = (yyvsp[(1) - (3)].nodeList);
 																	;}
     break;
 
   case 62:
-#line 346 "mini_pascal.y"
+#line 361 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (1)].indexList).indices[0]);
                                                     checkIdentifierIdType((yyvsp[(1) - (1)].indexList).indices[0], TYPE_VARIABLE);
@@ -2014,7 +2029,7 @@ yyreduce:
     break;
 
   case 63:
-#line 353 "mini_pascal.y"
+#line 368 "mini_pascal.y"
     {
                                                     checkIfIdentifierIsDeclared((yyvsp[(1) - (4)].indexList).indices[0]);
                                                     checkIdentifierIdType((yyvsp[(1) - (4)].indexList).indices[0], TYPE_VARIABLE);
@@ -2028,7 +2043,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 2032 "mini_pascal.tab.c"
+#line 2047 "mini_pascal.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2242,7 +2257,7 @@ yyreturn:
 }
 
 
-#line 363 "mini_pascal.y"
+#line 378 "mini_pascal.y"
 
 // ----------- CHECKING -----
 
