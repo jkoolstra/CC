@@ -85,18 +85,21 @@ Program : PROGRAM
             Compound_statement
             '.'								{
 												programNode = createProgramNode($2.indices[0], $7, $9);
+												free($2.indices);
 											}
 
-Identifier_list : ID { $$ = $1; }
+Identifier_list : ID 						{
+												$$ = $1;
+											}
                 | Identifier_list ',' ID    {
                                                 $$ = combineIdentifiers($1, $3);
+												free($3.indices);
                                             }
 
 Declarations    : Declarations VAR Identifier_list ':' Type ';' {
                                                                     declareVariable($3, $5);
 																	NodeList combined = $1;
 																	for(int i = 0; i < $3.numberOfIndices ; i++){
-																		printf("Dexlarations");
 																		ASTNode *declaration = createDeclarationNode($3.indices[i], $5);
 																		NodeList declarations = createNodeList(declaration);
 																		combined = combineNodeLists(combined, declarations);
@@ -457,7 +460,7 @@ void checkTypes(ASTNode *node1, ASTNode *node2, Operator operator){
   	case OP_RELOP_SMEQ :
   	case OP_RELOP_NOEQ :
   	case OP_RELOP_EQ : {
-      if(t1.base != t1.base){
+      if(t1.base != t2.base){
         char *war;
         asprintf(&war, "comparing integers with reals");
         warningMessage(war);
@@ -534,8 +537,7 @@ void insert(IdEntry entry){
 
 void declareVariable(StrtabIndexList indentifiers, Type type){
     for(int i = indentifiers.numberOfIndices-1 ; i >= 0 ; i--){
-        VariableData *data = safeMalloc(sizeof(VariableData *));
-
+        VariableData *data = safeMalloc(sizeof(VariableData));
 		data->type = type;
 
         IdEntry newEntry = makeIdEntry(indentifiers.indices[i]);
@@ -548,21 +550,20 @@ void declareVariable(StrtabIndexList indentifiers, Type type){
 
 void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList parameters){
     FunctionData data;
-
 	data.returnType = type;
-
 	data.parameters = parameters;
 
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = safeMalloc(sizeof(FunctionData));
 	memcpy(newEntry.data, &data, sizeof(FunctionData));
+
     newEntry.idType = TYPE_FUNCTION;
 
     insert(newEntry);
 }
 
 void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
-    ProcedureData *data = safeMalloc(sizeof(ProcedureData *));
+    ProcedureData *data = safeMalloc(sizeof(ProcedureData));
 	data->parameters = parameters;
     IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
     newEntry.data = data;
@@ -631,7 +632,9 @@ int main(int argc, char **argv) {
 	fclose(output);
     freeSymbolStack(&stack);
     freeStringTable(strTab);
+
 	freeNode(programNode);
+
 	finalizeLexer();
     return 0;
 }
