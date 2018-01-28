@@ -85,7 +85,6 @@ Program : PROGRAM
             Compound_statement
             '.'								{
 												programNode = createProgramNode($2.indices[0], $7, $9);
-												free($2.indices);
 											}
 
 Identifier_list : ID 						{
@@ -93,7 +92,6 @@ Identifier_list : ID 						{
 											}
                 | Identifier_list ',' ID    {
                                                 $$ = combineIdentifiers($1, $3);
-												free($3.indices);
                                             }
 
 Declarations    : Declarations VAR Identifier_list ':' Type ';' {
@@ -105,6 +103,7 @@ Declarations    : Declarations VAR Identifier_list ':' Type ';' {
 																		combined = combineNodeLists(combined, declarations);
 																	}
 																	$$ = combined;
+																	free($3.indices);
                                                                 }
                 | /* Empty */									{
 																	$$ = createEmptyNodeList();
@@ -132,6 +131,7 @@ Subprogram_declaration  : Subprogram_head
                             Declarations
                             Compound_statement  {
                                                     outdent(&stack);
+													free($1.indices);
                                                 }
 
 Subprogram_head : FUNCTION
@@ -163,10 +163,12 @@ Arguments       : '(' Parameter_list ')'    {
 
 Parameter_list  : Identifier_list ':' Type  {
                                                 $$ = createParameterList($1, $3);
+												free($1.indices);
                                             }
                 | Parameter_list ';' Identifier_list ':' Type   {
 																	ParameterList l = createParameterList($3, $5);
 																	$$ = combineParameterLists($1, l);
+																	free($3.indices);
 																}
 
 /* --------- STATEMENTS -------------- */
@@ -219,6 +221,7 @@ Variable        : ID                          {
 												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
 												  $$ = createVariableNode($1.indices[0], data->type);
+												  free($1.indices);
                                               }
                 | ID '[' Expression_list ']'  {
                                                   checkIfIdentifierIsDeclared($1.indices[0]);
@@ -228,18 +231,21 @@ Variable        : ID                          {
 												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
 												  VariableData *data = (VariableData *)entry->data;
 												  $$ = createArrayVariableNode($1.indices[0], data->type, $3);
+												  free($1.indices);
                                               }
 
 Procedure_statement : ID                        {
 													checkIfIdentifierIsDeclared($1.indices[0]);
 													checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
 													$$ = createProcedureCallNode($1.indices[0], createEmptyNodeList());
+  												  	free($1.indices);
 												}
                     | ID '(' Expression_list ')'  	{
 														checkIfIdentifierIsDeclared($1.indices[0]);
 														checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
 														checkParameterCountAndTypes($1.indices[0], $3, TYPE_PROCEDURE);
 														$$ = createProcedureCallNode($1.indices[0], $3);
+	  												  	free($1.indices);
 													}
 
 Expression_list : Expression						{
@@ -327,6 +333,7 @@ Factor          : Variable_factor				{ $$ = $1; }
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     FunctionData *data = (FunctionData *)entry->data;
 													$$ = createFunctionCallNode($1.indices[0], data->returnType, $3);
+  												  	free($1.indices);
 												}
                 | INUM                          {
 													$$ = createIValueNode($1);
@@ -353,6 +360,7 @@ Variable_factor : ID                            {
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = createVariableNode($1.indices[0], data->type);
+  												  	free($1.indices);
                 								}
 				| ID '[' Simple_expression ']'  {
                                                     checkIfIdentifierIsDeclared($1.indices[0]);
@@ -362,6 +370,7 @@ Variable_factor : ID                            {
                                                     IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
                                                     VariableData *data = (VariableData *)entry->data;
                                                     $$ = createArrayNode($1.indices[0], data->type, $3);
+  												  	free($1.indices);
                                                 }
 
 %%
