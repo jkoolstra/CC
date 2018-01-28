@@ -11,7 +11,6 @@
     #include "SymbolStack.h"
     #include "common.h"
 
-	#include "IRGenerator.h"
     // CHECKING
 	void checkCondition(ASTNode*);
 	void checkAssignment(ASTNode*, ASTNode*);
@@ -85,10 +84,7 @@ Program : PROGRAM
             Subprogram_declarations
             Compound_statement
             '.'								{
-												printf("Creating program nod\n");
 												programNode = createProgramNode($2.indices[0], $7, $9);
-												generateProgram(stdout, programNode);
-												printf("Creating program nod\n");
 											}
 
 Identifier_list : ID { $$ = $1; }
@@ -99,18 +95,13 @@ Identifier_list : ID { $$ = $1; }
 Declarations    : Declarations VAR Identifier_list ':' Type ';' {
                                                                     declareVariable($3, $5);
 																	NodeList combined = $1;
-
-																	printf("Starting combining : %d \n", $3.numberOfIndices);
 																	for(int i = 0; i < $3.numberOfIndices ; i++){
-																		printf("Dexlarations\n");
+																		printf("Dexlarations");
 																		ASTNode *declaration = createDeclarationNode($3.indices[i], $5);
-																		generateDeclarations(stdout, declaration);
-																		//NodeList declarations = createNodeList(declaration);
-																		//combined = combineNodeLists(combined, declarations);
-																		appendToNodeLists(&combined, declaration);
+																		NodeList declarations = createNodeList(declaration);
+																		combined = combineNodeLists(combined, declarations);
 																	}
 																	$$ = combined;
-																	printf("Combine size -> %d \n", combined.n);
                                                                 }
                 | /* Empty */									{
 																	$$ = createEmptyNodeList();
@@ -185,15 +176,12 @@ Optional_statements : Statement_list				{ $$ = $1;}
                     | /* Empty */					{ $$ = createEmptyNodeList();}
 
 Statement_list  : Statement							{
-														printf("First Statement\n");
 														NodeList list = createNodeList($1);
 														$$ = list;
 													}
                 | Statement_list ';' Statement		{
-																		printf("Following Statement\n");
-														appendToNodeLists(&$1, $3);
-														//NodeList list = combineNodeLists($1, createNodeList($3));
-														$$ = $1;
+														NodeList list = combineNodeLists($1, createNodeList($3));
+														$$ = list;
 													}
 
 Statement       : Variable ASSIGNOP Expression 	{
@@ -256,9 +244,8 @@ Expression_list : Expression						{
 														$$ = list;
 													}
                 | Expression_list ',' Expression	{
-														appendToNodeLists(&$1, $3);
-														//NodeList list = combineNodeLists($1, createNodeList($3));
-														$$ = $1;
+														NodeList list = combineNodeLists($1, createNodeList($3));
+														$$ = list;
 													}
 
 Expression      : Simple_expression                           		{
@@ -296,7 +283,7 @@ Simple_expression   : Term                          {
 														ASTNode *plus = createIValueNode(1);
                                                         $$ = createExpressionNode(plus, $2, OP_I_MULOP_M);
                                                     }
-                    | ADDOP_ADD Term                {   // - x  == ( -1 ) * x
+                    | ADDOP_ADD Term                {   // - x  == ( -1 * x
 														ASTNode *minus = createIValueNode(-1);
                                                         $$ = createExpressionNode(minus, $2, OP_I_MULOP_M);
                                                     }
@@ -352,10 +339,9 @@ Variable_factor_list	: Variable_factor							{
 																		NodeList list = createNodeList($1);
 																		$$ = list;
 																	}
-						| Variable_factor_list',' Variable_factor	{
-																		appendToNodeLists(&$1, $3);
-																		//NodeList list = combineNodeLists($1, createNodeList($3));
-																		$$ = $1;
+						| Variable_factor_list',' Variable_factor		{
+																		NodeList list = combineNodeLists($1, createNodeList($3));
+																		$$ = list;
 																	}
 
 Variable_factor : ID                            {
