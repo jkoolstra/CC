@@ -70,7 +70,7 @@ int insertSymbolInTable(SymbolTable* table, IdEntry entry) {
   table->hashtab[h] = malloc(sizeof(struct bucket));
   table->hashtab[h]->next = nxt;
   table->hashtab[h]->key = entry.strtabIndex;
-  table->hashtab[h]->data = malloc(sizeof(IdEntry));
+  table->hashtab[h]->data = safeMalloc(sizeof(IdEntry));
   memcpy(table->hashtab[h]->data, &entry, sizeof(IdEntry));
   return 1;
 }

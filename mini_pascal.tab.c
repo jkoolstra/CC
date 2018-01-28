@@ -2521,7 +2521,7 @@ int main(int argc, char **argv) {
 	freeNode(programNode);
 
 	finalizeLexer();
-	printf("VERSION 0.1\n");
+	printf("VERSION 0.2\n");
     return 0;
 }
 
