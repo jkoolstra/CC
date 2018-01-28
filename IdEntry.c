@@ -117,6 +117,10 @@ Type makeType(BaseType tb, SecondaryType ts, unsigned low, unsigned high){
   return t;
 }
 
+void freeStrtabIndexList(StrtabIndexList *list){
+    free(list->indices);
+}
+
 StrtabIndexList createStrtabIndexList(unsigned index){
     StrtabIndexList newList;
     newList.numberOfIndices = 1;

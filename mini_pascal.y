@@ -86,6 +86,7 @@ Program : PROGRAM
             Compound_statement
             '.'								{
 												programNode = createProgramNode($2, $7, $9);
+												freeStrtabIndexList(&$4);
 											}
 
 Identifier_list : ID 						{
@@ -104,7 +105,7 @@ Declarations    : Declarations VAR Identifier_list ':' Type ';' {
 																		combined = combineNodeLists(combined, declarations);
 																	}
 																	$$ = combined;
-																	free($3.indices);
+																	freeStrtabIndexList(&$3);
                                                                 }
                 | /* Empty */									{
 																	$$ = createEmptyNodeList();
@@ -132,6 +133,7 @@ Subprogram_declaration  : Subprogram_head
                             Declarations
                             Compound_statement  {
                                                     outdent(&stack);
+													freeStrtabIndexList(&$1);
                                                 }
 
 Subprogram_head : FUNCTION
@@ -161,10 +163,12 @@ Arguments       : '(' Parameter_list ')'    {
 
 Parameter_list  : Identifier_list ':' Type  {
                                                 $$ = createParameterList($1, $3);
+												freeStrtabIndexList(&$1);
                                             }
                 | Parameter_list ';' Identifier_list ':' Type   {
 																	ParameterList l = createParameterList($3, $5);
 																	$$ = combineParameterLists($1, l);
+																	freeStrtabIndexList(&$3);
 																}
 
 /* --------- STATEMENTS -------------- */
@@ -634,6 +638,6 @@ int main(int argc, char **argv) {
 	freeNode(programNode);
 
 	finalizeLexer();
-	printf("VERSION 0.1\n");
+	printf("VERSION 0.2\n");
     return 0;
 }
