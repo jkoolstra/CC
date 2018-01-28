@@ -105,11 +105,7 @@ void initLexer(char *filename) {
 }
 
 void makeIdentifier(){
-    unsigned index = appendToStringTable(&strTab, yytext);
-
-    yylval.indexList.indices = safeMalloc(sizeof(unsigned));
-    yylval.indexList.indices[0] = index;
-    yylval.indexList.numberOfIndices = 1;
+    yylval.index = appendToStringTable(&strTab, yytext);
 }
 
 void finalizeLexer() {

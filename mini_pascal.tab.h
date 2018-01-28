@@ -123,13 +123,14 @@ typedef union YYSTYPE
 	ASTNode *node;
 	NodeList nodeList;
 
+	unsigned index;
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
     TypeList typeList;
 }
 /* Line 1529 of yacc.c.  */
-#line 133 "mini_pascal.tab.h"
+#line 134 "mini_pascal.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

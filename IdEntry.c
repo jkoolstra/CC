@@ -117,6 +117,14 @@ Type makeType(BaseType tb, SecondaryType ts, unsigned low, unsigned high){
   return t;
 }
 
+StrtabIndexList createStrtabIndexList(unsigned index){
+    StrtabIndexList newList;
+    newList.numberOfIndices = 1;
+    newList.indices = safeMalloc(sizeof(unsigned));
+	newList.indices[0] = index;
+    return newList;
+}
+
 ParameterList createParameterList(StrtabIndexList list, Type t){
     ParameterList newList;
     newList.numberOfParameters = list.numberOfIndices;

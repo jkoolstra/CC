@@ -80,6 +80,7 @@ char *baseTypeString(BaseType type);
 IdEntry makeIdEntry(unsigned);
 void freeIdEntry(IdEntry*);
 Type makeType(BaseType, SecondaryType, unsigned, unsigned);
+StrtabIndexList createStrtabIndexList(unsigned index);
 ParameterList createParameterList(StrtabIndexList list, Type t);
 TypeList createTypeList(Type t);
 

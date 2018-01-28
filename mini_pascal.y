@@ -23,11 +23,11 @@
     void checkTypes(ASTNode*, ASTNode*, Operator);
 
 	// DECLARING
-    void declareFunctionLocallyAsVariable(StrtabIndexList, Type type);
+    void declareFunctionLocallyAsVariable(unsigned, Type type);
     void declareParametersLocallyAsVariables(ParameterList);
     void declareVariable(StrtabIndexList, Type);
-    void declareFunction(StrtabIndexList, Type, ParameterList);
-    void declareProcedure(StrtabIndexList, ParameterList);
+    void declareFunction(unsigned, Type, ParameterList);
+    void declareProcedure(unsigned, ParameterList);
 
 	// ERROR HANDLING
     int yyerror(char *errmsg);
@@ -44,6 +44,7 @@
 	ASTNode *node;
 	NodeList nodeList;
 
+	unsigned index;
     StrtabIndexList indexList;
     ParameterList parameterList;
     Type type;
@@ -68,7 +69,7 @@
 
 %type <iValue> INUM
 %type <rValue> RNUM
-%type <indexList> ID
+%type <index> ID
 
 
 %start Program
@@ -84,15 +85,14 @@ Program : PROGRAM
             Subprogram_declarations
             Compound_statement
             '.'								{
-												programNode = createProgramNode($2.indices[0], $7, $9);
-												free($2.indices);
+												programNode = createProgramNode($2, $7, $9);
 											}
 
 Identifier_list : ID 						{
-												$$ = $1;
+												$$ = createStrtabIndexList($1);
 											}
                 | Identifier_list ',' ID    {
-                                                $$ = combineIdentifiers($1, $3);
+                                                $$ = combineIdentifiers($1, createStrtabIndexList($3));
                                             }
 
 Declarations    : Declarations VAR Identifier_list ':' Type ';' {
@@ -132,7 +132,6 @@ Subprogram_declaration  : Subprogram_head
                             Declarations
                             Compound_statement  {
                                                     outdent(&stack);
-													free($1.indices);
                                                 }
 
 Subprogram_head : FUNCTION
@@ -142,7 +141,6 @@ Subprogram_head : FUNCTION
                                                             indent(&stack);
                                                             declareFunctionLocallyAsVariable($2, $5);
                                                             declareParametersLocallyAsVariables($3);
-															$$ = $2;
                                                         }
                 | PROCEDURE
                     ID
@@ -150,7 +148,6 @@ Subprogram_head : FUNCTION
                                         declareProcedure($2, $3);
                                         indent(&stack);
                                         declareParametersLocallyAsVariables($3);
-										$$ = $2;
                                     }
 
 Arguments       : '(' Parameter_list ')'    {
@@ -164,12 +161,10 @@ Arguments       : '(' Parameter_list ')'    {
 
 Parameter_list  : Identifier_list ':' Type  {
                                                 $$ = createParameterList($1, $3);
-												free($1.indices);
                                             }
                 | Parameter_list ';' Identifier_list ':' Type   {
 																	ParameterList l = createParameterList($3, $5);
 																	$$ = combineParameterLists($1, l);
-																	free($3.indices);
 																}
 
 /* --------- STATEMENTS -------------- */
@@ -216,37 +211,33 @@ Statement       : Variable ASSIGNOP Expression 	{
 																}
 
 Variable        : ID                          {
-                                                  checkIfIdentifierIsDeclared($1.indices[0]);
-                                                  checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
-												  checkIdentifierSecondaryType($1.indices[0], TYPE_SCALAR);
-												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+                                                  checkIfIdentifierIsDeclared($1);
+                                                  checkIdentifierIdType($1, TYPE_VARIABLE);
+												  checkIdentifierSecondaryType($1, TYPE_SCALAR);
+												  IdEntry *entry = lookupSymbol(&stack,$1);
 												  VariableData *data = (VariableData *)entry->data;
-												  $$ = createVariableNode($1.indices[0], data->type);
-												  free($1.indices);
+												  $$ = createVariableNode($1, data->type);
                                               }
                 | ID '[' Expression_list ']'  {
-                                                  checkIfIdentifierIsDeclared($1.indices[0]);
-                                                  checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
-                                                  checkIdentifierSecondaryType($1.indices[0], TYPE_ARRAY);
+                                                  checkIfIdentifierIsDeclared($1);
+                                                  checkIdentifierIdType($1, TYPE_VARIABLE);
+                                                  checkIdentifierSecondaryType($1, TYPE_ARRAY);
 												  checkIfMultipleArrayIndicesAreAllIntegers($3);
-												  IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+												  IdEntry *entry = lookupSymbol(&stack,$1);
 												  VariableData *data = (VariableData *)entry->data;
-												  $$ = createArrayVariableNode($1.indices[0], data->type, $3);
-												  free($1.indices);
+												  $$ = createArrayVariableNode($1, data->type, $3);
                                               }
 
 Procedure_statement : ID                        {
-													checkIfIdentifierIsDeclared($1.indices[0]);
-													checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
-													$$ = createProcedureCallNode($1.indices[0], createEmptyNodeList());
-  												  	free($1.indices);
+													checkIfIdentifierIsDeclared($1);
+													checkIdentifierIdType($1, TYPE_PROCEDURE);
+													$$ = createProcedureCallNode($1, createEmptyNodeList());
 												}
                     | ID '(' Expression_list ')'  	{
-														checkIfIdentifierIsDeclared($1.indices[0]);
-														checkIdentifierIdType($1.indices[0], TYPE_PROCEDURE);
-														checkParameterCountAndTypes($1.indices[0], $3, TYPE_PROCEDURE);
-														$$ = createProcedureCallNode($1.indices[0], $3);
-	  												  	free($1.indices);
+														checkIfIdentifierIsDeclared($1);
+														checkIdentifierIdType($1, TYPE_PROCEDURE);
+														checkParameterCountAndTypes($1, $3, TYPE_PROCEDURE);
+														$$ = createProcedureCallNode($1, $3);
 													}
 
 Expression_list : Expression						{
@@ -328,13 +319,12 @@ Term            : Factor                        {
 
 Factor          : Variable_factor				{ $$ = $1; }
                 | ID '(' Expression_list ')'    {
-                                                    checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIdentifierIdType($1.indices[0], TYPE_FUNCTION);
-													checkParameterCountAndTypes($1.indices[0], $3, TYPE_FUNCTION);
-                                                    IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+                                                    checkIfIdentifierIsDeclared($1);
+                                                    checkIdentifierIdType($1, TYPE_FUNCTION);
+													checkParameterCountAndTypes($1, $3, TYPE_FUNCTION);
+                                                    IdEntry *entry = lookupSymbol(&stack,$1);
                                                     FunctionData *data = (FunctionData *)entry->data;
-													$$ = createFunctionCallNode($1.indices[0], data->returnType, $3);
-  												  	free($1.indices);
+													$$ = createFunctionCallNode($1, data->returnType, $3);
 												}
                 | INUM                          {
 													$$ = createIValueNode($1);
@@ -356,22 +346,20 @@ Variable_factor_list	: Variable_factor							{
 																	}
 
 Variable_factor : ID                            {
-                                                    checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
-                                                    IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+                                                    checkIfIdentifierIsDeclared($1);
+                                                    checkIdentifierIdType($1, TYPE_VARIABLE);
+                                                    IdEntry *entry = lookupSymbol(&stack,$1);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = createVariableNode($1.indices[0], data->type);
-  												  	free($1.indices);
+                                                    $$ = createVariableNode($1, data->type);
                 								}
 				| ID '[' Simple_expression ']'  {
-                                                    checkIfIdentifierIsDeclared($1.indices[0]);
-                                                    checkIdentifierIdType($1.indices[0], TYPE_VARIABLE);
-                                                    checkIdentifierSecondaryType($1.indices[0], TYPE_ARRAY);
+                                                    checkIfIdentifierIsDeclared($1);
+                                                    checkIdentifierIdType($1, TYPE_VARIABLE);
+                                                    checkIdentifierSecondaryType($1, TYPE_ARRAY);
 													checkIfArrayIndexIsInteger($3);
-                                                    IdEntry *entry = lookupSymbol(&stack,$1.indices[0]);
+                                                    IdEntry *entry = lookupSymbol(&stack,$1);
                                                     VariableData *data = (VariableData *)entry->data;
-                                                    $$ = createArrayNode($1.indices[0], data->type, $3);
-  												  	free($1.indices);
+                                                    $$ = createArrayNode($1, data->type, $3);
                                                 }
 
 %%
@@ -558,12 +546,12 @@ void declareVariable(StrtabIndexList indentifiers, Type type){
     }
 }
 
-void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList parameters){
+void declareFunction(unsigned index, Type type, ParameterList parameters){
     FunctionData data;
 	data.returnType = type;
 	data.parameters = parameters;
 
-    IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
+    IdEntry newEntry = makeIdEntry(index);
     newEntry.data = safeMalloc(sizeof(FunctionData));
 	memcpy(newEntry.data, &data, sizeof(FunctionData));
 
@@ -572,10 +560,10 @@ void declareFunction(StrtabIndexList indentifiers, Type type, ParameterList para
     insert(newEntry);
 }
 
-void declareProcedure(StrtabIndexList indentifiers, ParameterList parameters){
+void declareProcedure(unsigned index, ParameterList parameters){
     ProcedureData *data = safeMalloc(sizeof(ProcedureData));
 	data->parameters = parameters;
-    IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
+    IdEntry newEntry = makeIdEntry(index);
     newEntry.data = data;
     newEntry.idType = TYPE_PROCEDURE;
 	insert(newEntry);
@@ -594,10 +582,10 @@ void declareParametersLocallyAsVariables(ParameterList list){
     }
 }
 
-void declareFunctionLocallyAsVariable(StrtabIndexList indentifiers, Type type){
+void declareFunctionLocallyAsVariable(unsigned index, Type type){
     VariableData *data = safeMalloc(sizeof(VariableData *));
 	data->type = type;
-    IdEntry newEntry = makeIdEntry(indentifiers.indices[0]);
+    IdEntry newEntry = makeIdEntry(index);
     newEntry.data = data;
     newEntry.idType = TYPE_VARIABLE;
     insert(newEntry);
