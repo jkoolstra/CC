@@ -634,5 +634,6 @@ int main(int argc, char **argv) {
 	freeNode(programNode);
 
 	finalizeLexer();
+	printf("VERSION 0.1\n");
     return 0;
 }
