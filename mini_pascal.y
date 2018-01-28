@@ -85,6 +85,7 @@ Program : PROGRAM
             Compound_statement
             '.'								{
 												programNode = createProgramNode($2.indices[0], $7, $9);
+												free($2.indices);
 											}
 
 Identifier_list : ID 						{
