@@ -24,6 +24,7 @@ void freeSymbolTable(SymbolTable* table) {
       bucket b = table->hashtab[i];
       table->hashtab[i] = table->hashtab[i]->next;
       freeIdEntry(b->data);
+	  free(b->data);
       free(b);
     }
   }
@@ -59,7 +60,7 @@ IdEntry *lookupSymbolInTable(SymbolTable* table, unsigned strtabIndex) {
   return linearSearch(strtabIndex, table->hashtab[hash(str)]);
 }
 
-int insertSymbolInTable(SymbolTable* table, IdEntry entry) {
+int insertSymbolInTable(SymbolTable* table, IdEntry *entry) {
   IdEntry *lookup = lookupSymbolInTable(table, entry.strtabIndex);
   if(lookup != NULL){
     return 0;

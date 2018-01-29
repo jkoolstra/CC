@@ -21,7 +21,7 @@ SymbolStack initSymbolStack(StringTable*);
 void freeSymbolStack(SymbolStack*);
 IdEntry *lookupSymbol(SymbolStack*, unsigned);
 IdEntry *findShadowedFunctionOrProcedure(SymbolStack* stack, unsigned strtabIndex);
-int insertSymbol(SymbolStack*, IdEntry);
+int insertSymbol(SymbolStack*, IdEntry*);
 void indent(SymbolStack*);
 void outdent(SymbolStack*);
 void printSymbolStack(SymbolStack*);

@@ -42,7 +42,7 @@ IdEntry *findShadowedFunctionOrProcedure(SymbolStack* stack, unsigned strtabInde
 }
 
 
-int insertSymbol(SymbolStack* stack, IdEntry entry){
+int insertSymbol(SymbolStack* stack, IdEntry *entry){
   return insertSymbolInTable(&stack->tables[stack->curLvl], entry);
 }
 

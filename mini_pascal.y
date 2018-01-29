@@ -18,7 +18,7 @@
     void checkIdentifierIdType(unsigned, IdType);
     void checkIdentifierSecondaryType(unsigned, SecondaryType);
 	void checkIfArrayIndexIsInteger(ASTNode*);
-	void checkIfMultipleArrayIndicesAreAllIntegers(NodeList);			//TODO: ADD this functionality back
+	void checkIfMultipleArrayIndicesAreAllIntegers(NodeList);
 	void checkParameterCountAndTypes(unsigned id, NodeList list, IdType type);
     void checkTypes(ASTNode*, ASTNode*, Operator);
 
@@ -638,6 +638,5 @@ int main(int argc, char **argv) {
 	freeNode(programNode);
 
 	finalizeLexer();
-	printf("VERSION 0.2\n");
     return 0;
 }
