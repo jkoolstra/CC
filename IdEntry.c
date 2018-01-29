@@ -89,21 +89,18 @@ void freeParameterList(ParameterList *list){
 }
 
 void freeIdEntry(IdEntry *entry ){
-	printf("Freeign identry\n");
 	void *data = entry->data;
 	switch(entry->idType){
 		case TYPE_PROGRAM :
-			printf("Freeign identry\n");break;
+			break;
 		case TYPE_FUNCTION : {
-			printf("Freeign identry\n");
 			freeParameterList(&((FunctionData *)data)->parameters); break;
 		}
 		case TYPE_PROCEDURE : {
-			printf("Freeign identry\n");
 			freeParameterList(&((ProcedureData *)data)->parameters); break;
 		}
 		case TYPE_VARIABLE :
-			printf("Freeign identry\n");break;
+			break;
 	}
 	free(entry->data);
 }

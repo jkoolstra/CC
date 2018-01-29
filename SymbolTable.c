@@ -24,6 +24,7 @@ void freeSymbolTable(SymbolTable* table) {
       bucket b = table->hashtab[i];
       table->hashtab[i] = table->hashtab[i]->next;
       freeIdEntry(b->data);
+	  free(b->data);
       free(b);
     }
   }

@@ -232,7 +232,6 @@ NodeList createNodeList(ASTNode *node){
 }
 
 NodeList combineNodeLists(NodeList listOne, NodeList listTwo){
-	// TODO : Free lists
 	NodeList combinedList;
 	combinedList.n = listOne.n + listTwo.n;
 	combinedList.nodes = safeMalloc(combinedList.n * sizeof(ASTNode));
@@ -251,7 +250,6 @@ NodeList combineNodeLists(NodeList listOne, NodeList listTwo){
 
 // Helper
 Type determineExpressionType(ASTNode *initial){
-	// TODO THERE ARE SOME ISSUES WITH CONDITIONS
 	ExpressionNode *node = (ExpressionNode *)initial->data;
 	Type leftType = determineType(node->left);
 	Type rightType = determineType(node->right);
@@ -318,7 +316,7 @@ void freeNode(ASTNode *node){
 			freeNodeList(((ArrayVariableNode *)node->data)->indices);
 			break;
 		}
-		case NODE_ARRAY: break;	// TODO : free index
+		case NODE_ARRAY: break;
 		case NODE_EXPRESSION: {
 			freeNode(((ExpressionNode *)node->data)->left);
 			freeNode(((ExpressionNode *)node->data)->right);
