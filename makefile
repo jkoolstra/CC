@@ -3,9 +3,6 @@ CFLAGS=-O2 -Wall -Wunused-function
 all: scanner parser SymbolTable.o SymbolStack.o StringTable.o IdEntry.o common.o AST.o IRGenerator.o
 	${CC} ${CFLAGS} mini_pascal.tab.c StringTable.o SymbolTable.o SymbolStack.o IdEntry.o common.o AST.o IRGenerator.o -ll -lm
 
-val: scanner parser SymbolTable.o SymbolStack.o StringTable.o IdEntry.o common.o AST.o IRGenerator.o
-	${CC} ${CFLAGS} -fno-stack-protector mini_pascal.tab.c StringTable.o SymbolTable.o SymbolStack.o IdEntry.o common.o AST.o IRGenerator.o -ll -lm
-
 scanner: mini_pascal.l
 	flex -i mini_pascal.l
 parser: mini_pascal.y

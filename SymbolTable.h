@@ -24,7 +24,7 @@ typedef struct symbolTable {
 SymbolTable initSymbolTable(StringTable*);
 void freeSymbolTable(SymbolTable*);
 IdEntry *lookupSymbolInTable(SymbolTable*, unsigned);
-int insertSymbolInTable(SymbolTable*, IdEntry);
+int insertSymbolInTable(SymbolTable*, IdEntry*);
 void printSymbolTable(SymbolTable*);
 
 #endif

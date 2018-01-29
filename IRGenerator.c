@@ -13,15 +13,12 @@ void generate(FILE*, ASTNode*);
 char *operatorString(Operator op);
 
 void generateProgram(FILE* file, ASTNode *node){
-	printf("Generating program \n");
 	fprintf(file,"#include <stdio.h>\n");
 	fprintf(file,"#include <stdlib.h>\n");
 	fprintf(file,"int main(int argc, char **argv){\n");
 	idx = 0;
 	lblIdx = 0;
 	ProgramNode *program = (ProgramNode *)node->data;
-
-	printf("Number of declarations : %d\n", program->declarations.n);
 	for(int i = 0; i < program->declarations.n; i++){
 		generate(file, program->declarations.nodes[i]);
 	}
@@ -214,30 +211,30 @@ char *operatorString(Operator op){
 
 void generate(FILE* file, ASTNode *node){
 	switch(node->type){
-		case NODE_IVALUE:if(PRINT){printf("//NODE_IVALUE\n");} generateIValue(file, node); break;//TODO
-		case NODE_RVALUE: if(PRINT){printf("//NODE_RVALUE\n");} generateRValue(file, node); break;//TODO
-		case NODE_VARIABLE: if(PRINT){printf("//NODE_VARIABLE\n");} generateVariable(file, node); break;//TODO
-		case NODE_ARRAY_VARIABLE : if(PRINT){printf("//NODE_ARRAY_VARIABLE\n");} // This node can only appear on the left side of a assignment
-		case NODE_ARRAY: if(PRINT){printf("//NODE_ARRAY\n");} generateArray(file, node); break;//TODO
-		case NODE_EXPRESSION: if(PRINT){printf("//NODE_EXPRESSION\n");} generateExpression(file, node); break;//TODO
-		case NODE_FUNCTION_CALL: if(PRINT){printf("//NODE_FUNCTION_CALL\n");} break;//TODO
-		case NODE_ASSIGNMENT: if(PRINT){printf("//NODE_ASSIGNMENT\n");} generateAssignment(file, node); break;
-		case NODE_COMPOUND_STATEMENT: if(PRINT){printf("//NODE_COMPOUND_STATEMENT\n");} generateCompoundStatement(file, node); break;//TODO
-		case NODE_PROCEDURE_CALL: if(PRINT){printf("//NODE_PROCEDURE_CALL\n");} break;//TODO
-		case NODE_IF_ELSE: if(PRINT){printf("//NODE_IF_ELSE\n");} generateIfStatement(file, node); break;//TODO
-		case NODE_WHILE: if(PRINT){printf("//NODE_WHILE\n");} generateWhileStatement(file, node); break;//TODO
-		case NODE_PROGRAM: if(PRINT){printf("//NODE_PROGRAM\n");} generateProgram(file, node); break;//TODO
-		case NODE_FUNCTION: if(PRINT){printf("//NODE_FUNCTION\n");} break;//TODO
-		case NODE_PROCEDURE: if(PRINT){printf("//NODE_PROCEDURE\n");} break;//TODO
-		case NODE_DECLARATION: if(PRINT){printf("//NODE_DECLARATION\n");} generateDeclarations(file, node); break; //TODO
-		case NODE_READLN: if(PRINT){printf("//NODE_READLN\n");} generateReadLn(file, node); break;
-		case NODE_WRITELN: if(PRINT){printf("//NODE_WRITELN\n");} generateWriteLn(file, node); break;
+		case NODE_IVALUE: generateIValue(file, node); break;
+		case NODE_RVALUE: generateRValue(file, node); break;
+		case NODE_VARIABLE: generateVariable(file, node); break;
+		case NODE_ARRAY_VARIABLE : break; // This node can only appear on the left side of a assignment
+		case NODE_ARRAY: generateArray(file, node); break;
+		case NODE_EXPRESSION: generateExpression(file, node); break;
+		case NODE_FUNCTION_CALL: break;
+		case NODE_ASSIGNMENT: generateAssignment(file, node); break;
+		case NODE_COMPOUND_STATEMENT:  generateCompoundStatement(file, node); break;
+		case NODE_PROCEDURE_CALL:  break;
+		case NODE_IF_ELSE:  generateIfStatement(file, node); break;
+		case NODE_WHILE: generateWhileStatement(file, node); break;
+		case NODE_PROGRAM: generateProgram(file, node); break;
+		case NODE_FUNCTION: break;
+		case NODE_PROCEDURE:  break;
+		case NODE_DECLARATION: generateDeclarations(file, node); break;
+		case NODE_READLN: generateReadLn(file, node); break;
+		case NODE_WRITELN:  generateWriteLn(file, node); break;
 	}
 }
 
 void generateIR(FILE *file, ASTNode *programNode){
 	if(programNode->type != NODE_PROGRAM){
-		exit(EXIT_FAILURE); // TODO : move error handling to seperate module
+		exit(EXIT_FAILURE); `
 	} else {
 		generate(file, programNode);
 	}
